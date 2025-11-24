@@ -67,6 +67,7 @@ The project incorporates patterns to handle the instability of external services
 
 ## Excalidraw Diagrams Backend
 
+[Excalidraw File Link](https://excalidraw.com/#json=e323lmQXd7zlJJtqi9DpT,8Y8shsL2KvpSI3_dpJfklw)
 
 ## Figma Frontend Design
 
