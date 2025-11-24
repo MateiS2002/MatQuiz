@@ -1,7 +1,5 @@
 # MatQuiz
 
------
-
 ## Description
 
 Online quiz game inspired by Kahoot, where questions are generated automatically by an LLM.
@@ -16,7 +14,6 @@ Online quiz game inspired by Kahoot, where questions are generated automatically
   * Multiplayer mode with real-time synchronization
   * Simple anticheat with time validation on server-side
 
------
 
 ## Architecture and Design
 
@@ -36,7 +33,6 @@ MatQuiz is built as an **Event-Driven Microservices** platform deployed on a sin
 4.  **`ai-process`** (Validation Service) cleans the JSON, enforces the required schema (e.g., 4 answers, valid index), and publishes the verified quiz to **`ai.validated`**.
 5.  **Backend** consumes the validated quiz and broadcasts the "Quiz Ready" state via **WebSocket**.
 
------
 
 ## Technology Stack
 
@@ -49,7 +45,6 @@ MatQuiz is built as an **Event-Driven Microservices** platform deployed on a sin
 | **AI Content** | **Google Gemini 2.5 Flash** | Provides fast, on-demand content generation via its REST API. |
 | **Deployment** | **Docker / Nginx** | Ensures easy portability and reliable hosting on the VPS. |
 
------
 
 ## Stability and Reliability
 
@@ -59,7 +54,6 @@ The project incorporates patterns to handle the instability of external services
   * **JSON Schema Validation:** The `ai-process` microservice guarantees data consistency. If Gemini generates malformed JSON, `ai-process` initiates an automatic **retry loop** to request a new quiz before failing the job.
   * **Server-Side Time Validation:** Anti-cheat logic is enforced by tracking the question start time and answer submission time strictly on the server, eliminating client-side cheating.
 
------
 
 ##  Project Structure
 
@@ -73,16 +67,11 @@ The project incorporates patterns to handle the instability of external services
 
 ## Excalidraw Diagrams Backend
 
------
 
 ## Excalidraw Diagrams Frontend
 
------
 
 ## DB Diagrams (Main Database Schema)
 
------
 
 ## DB Diagrams (Backup Database Schema)
-
------
