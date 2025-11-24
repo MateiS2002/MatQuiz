@@ -69,12 +69,18 @@ The project incorporates patterns to handle the instability of external services
 
 [Excalidraw File Link](https://excalidraw.com/#json=e323lmQXd7zlJJtqi9DpT,8Y8shsL2KvpSI3_dpJfklw)
 
+<img width="3175" height="1108" alt="Excalidraw_Backend_Diagram" src="https://github.com/user-attachments/assets/604d7da1-f576-4e88-bab2-5603366d7590" />
+
+
 ## Figma Frontend Design
 
+<img width="10976" height="6496" alt="FigmaDesign" src="https://github.com/user-attachments/assets/30c275e1-facf-42cb-8707-036eece193a9" />
 
 ## DB Diagrams (Main Database Schema)
 
 [DB Diagram Link Main Database](https://dbdiagram.io/d/Mat_Quiz_Diagram-691e128c228c5bbc1a9b6451)
+
+<img width="2105" height="1222" alt="DBDiagramMainDatabase" src="https://github.com/user-attachments/assets/b514c832-108c-4102-b14c-ea60e1239eff" />
 
 ```java
 Project MatQuiz {
@@ -182,6 +188,8 @@ Table player_answers {
 ## DB Diagrams (Backup Database Schema)
 
 [DB Diagram Link Backup Database](https://dbdiagram.io/d/MatQuiz-AI-Backup-Database-6924341e228c5bbc1a37a76a)
+
+<img width="812" height="509" alt="DBDiagramBackupDatabase" src="https://github.com/user-attachments/assets/5aa7bc41-2acc-430e-a42d-57d3daa96c39" />
 
 ```java
 Project MatQuiz_Backup {
