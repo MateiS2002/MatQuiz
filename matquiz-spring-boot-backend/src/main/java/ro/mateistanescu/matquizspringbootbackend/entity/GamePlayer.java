@@ -1,13 +1,17 @@
 package ro.mateistanescu.matquizspringbootbackend.entity;
 
 import jakarta.persistence.*;
-import lombok.Data;
+import lombok.*;
 
 import java.time.LocalDateTime;
 
 @Entity
 @Table(name = "game_players", uniqueConstraints = {@UniqueConstraint(columnNames = {"game_room_id", "user_id"})})
-@Data
+@Getter
+@Setter
+@Builder
+@NoArgsConstructor
+@AllArgsConstructor
 public class GamePlayer {
     @Id
     @GeneratedValue(strategy = GenerationType.IDENTITY)
@@ -27,6 +31,7 @@ public class GamePlayer {
     @Column(name = "socket_session_id")
     private String socketSessionId;
 
+    @Builder.Default
     @Column(nullable = false)
     private Integer score = 0;
 
@@ -42,6 +47,8 @@ public class GamePlayer {
 
         //TODO: See if this check is necessary
         if (this.score == null) this.score = 0;
+        //TODO: Additional query not efficient
+        if (this.nickname == null) this.nickname = this.user.getUsername();
         if (this.isConnected == null) this.isConnected = true;
     }
 }

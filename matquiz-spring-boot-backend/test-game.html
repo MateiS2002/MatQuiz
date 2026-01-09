@@ -1,0 +1,177 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <title>MatQuiz WebSocket Sync Tester</title>
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/sockjs-client/1.6.1/sockjs.min.js"></script>
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/stomp.js/2.3.3/stomp.min.js"></script>
+    <style>
+        body { font-family: 'Segoe UI', sans-serif; padding: 20px; max-width: 1000px; margin: 0 auto; background-color: #f4f6f9; }
+        .box { background: white; border: 1px solid #ddd; padding: 20px; margin-bottom: 20px; border-radius: 8px; box-shadow: 0 2px 5px rgba(0,0,0,0.05); }
+        .flex { display: flex; gap: 20px; }
+        .flex-grow { flex-grow: 1; }
+        h3 { margin-top: 0; border-bottom: 2px solid #eee; padding-bottom: 10px; color: #333; }
+        input { padding: 10px; width: 250px; border: 1px solid #ccc; border-radius: 4px; }
+        button { padding: 10px 15px; cursor: pointer; color: white; border: none; border-radius: 4px; font-weight: bold; }
+        #btnConnect { background: #007bff; }
+        #btnDisconnect { background: #dc3545; }
+        #logs { background: #1e1e1e; color: #eee; height: 350px; overflow-y: scroll; padding: 15px; font-family: monospace; border-radius: 6px; font-size: 13px; }
+        .log-entry { margin-bottom: 4px; border-bottom: 1px solid #333; padding-bottom: 2px; }
+        .msg-success { color: #4cd964; }
+        .msg-sys { color: #00d2ff; }
+        .player-item { padding: 8px; border-bottom: 1px solid #eee; display: flex; justify-content: space-between; align-items: center; }
+        .status-dot { width: 10px; height: 10px; border-radius: 50%; display: inline-block; margin-right: 5px; }
+        .online { background: #28a745; box-shadow: 0 0 5px #28a745; }
+        .offline { background: #dc3545; opacity: 0.5; }
+    </style>
+</head>
+<body>
+
+<h1>🎮 MatQuiz Sync Tester</h1>
+
+<div class="box">
+    <h3>1. Connection</h3>
+    <input type="text" id="jwtToken" placeholder="Paste JWT Token...">
+    <button onclick="connect()" id="btnConnect">🔌 Connect</button>
+    <button onclick="disconnect()" id="btnDisconnect" disabled>❌ Disconnect</button>
+    <span id="status" style="margin-left: 15px; font-weight: bold; color: #666;">Status: Disconnected 🔴</span>
+</div>
+
+<div class="flex">
+    <div class="box flex-grow">
+        <h3>2. Lobby Control</h3>
+        <div id="roomInfo" style="display:none; background: #e3f2fd; padding: 15px; border-radius: 5px; border: 1px solid #90caf9; margin-bottom: 15px;">
+            <h2 style="margin:0; color: #1565c0;">ROOM: <span id="lblRoomCode">---</span></h2>
+            <p><strong>Host:</strong> <span id="lblHost">---</span> | <strong>Topic:</strong> <span id="lblTopic">---</span></p>
+        </div>
+        <input type="text" id="joinCode" placeholder="Enter Room Code (e.g. ABC12)">
+        <button onclick="joinRoom()" id="btnJoin" style="background:#17a2b8;" disabled>➡ Join Lobby</button>
+        <button onclick="createRoom()" id="btnCreate" style="background:#28a745;" disabled>➕ Create New</button>
+    </div>
+
+    <div class="box" style="width: 300px;">
+        <h3>👥 Players</h3>
+        <div id="playerList">
+            <p style="color:#999; font-style: italic;">No active lobby</p>
+        </div>
+    </div>
+</div>
+
+<div class="box">
+    <h3>📡 Real-time Broadcast Logs</h3>
+    <div id="logs"></div>
+</div>
+
+<script>
+    var stompClient = null;
+    var currentSubscription = null;
+
+    function log(message, type = '') {
+        var logsDiv = document.getElementById("logs");
+        var entry = document.createElement("div");
+        entry.className = "log-entry " + type;
+        entry.innerText = `[${new Date().toLocaleTimeString()}] ${message}`;
+        logsDiv.appendChild(entry);
+        logsDiv.scrollTop = logsDiv.scrollHeight;
+    }
+
+    function connect() {
+        var token = document.getElementById("jwtToken").value.trim();
+        if (!token) { alert("Please provide a JWT token!"); return; }
+
+        var socket = new SockJS('http://localhost:8080/ws');
+        stompClient = Stomp.over(socket);
+        stompClient.debug = null; // Set to console.log to see raw STOMP frames
+
+        stompClient.connect({'Authorization': 'Bearer ' + token}, function (frame) {
+            setConnected(true);
+            log(`✅ CONNECTED as ${frame.headers['user-name']}`, 'msg-success');
+
+            // Listen for private responses
+            stompClient.subscribe('/user/queue/created', (msg) => handleLobbyUpdate(JSON.parse(msg.body), 'Room Created'));
+            stompClient.subscribe('/user/queue/joined', (msg) => handleLobbyUpdate(JSON.parse(msg.body), 'Successfully Joined'));
+            stompClient.subscribe('/user/queue/reconnected', (msg) => handleLobbyUpdate(JSON.parse(msg.body), 'Session Restored'));
+            stompClient.subscribe('/user/queue/errors', (msg) => log(`❌ ERROR: ${msg.body}`, 'offline'));
+
+            // Auto-check for active games
+            log("🔄 Checking for existing sessions...", 'msg-sys');
+            stompClient.send("/app/reconnect", {}, "{}");
+
+        }, (err) => {
+            log("❌ Connection Error: " + err);
+            setConnected(false);
+        });
+    }
+
+    function handleLobbyUpdate(roomDto, reason) {
+        log(`✨ UPDATE [${reason}]: Room ${roomDto.roomCode} state received.`);
+        
+        // 1. UI Updates
+        document.getElementById("roomInfo").style.display = 'block';
+        document.getElementById("lblRoomCode").innerText = roomDto.roomCode;
+        document.getElementById("lblHost").innerText = roomDto.host.username;
+        document.getElementById("lblTopic").innerText = roomDto.topic;
+
+        // 2. Render Player List
+        const listDiv = document.getElementById("playerList");
+        listDiv.innerHTML = roomDto.players.map(p => `
+            <div class="player-item">
+                <span><span class="status-dot ${p.isConnected ? 'online' : 'offline'}"></span> ${p.nickname}</span>
+                <small>Score: ${p.score}</small>
+            </div>
+        `).join('');
+
+        // 3. Ensure we are subscribed to the public topic for this room
+        subscribeToRoomTopic(roomDto.roomCode);
+    }
+
+    function subscribeToRoomTopic(code) {
+        // REMOVE this check or make it smarter:
+        // if (currentSubscription && currentSubscription.code === code) return; 
+
+        // Always clean up old subscription if it exists
+        if (currentSubscription) {
+            log(`🗑️ Cleaning up old subscription for ${currentSubscription.code}`);
+            currentSubscription.sub.unsubscribe();
+        }
+
+        log(`📡 Subscribing to topic: /topic/room/${code}`);
+        var sub = stompClient.subscribe(`/topic/room/${code}`, function (msg) {
+            var updatedRoom = JSON.parse(msg.body);
+            handleLobbyUpdate(updatedRoom, 'Broadcast Update');
+        });
+
+        currentSubscription = { code: code, sub: sub };
+    }
+
+    function createRoom() {
+        log("🚀 Sending create request...");
+        stompClient.send("/app/create", {}, "{}");
+    }
+
+    function joinRoom() {
+        var code = document.getElementById("joinCode").value.trim();
+        if(!code) return;
+        log(`🚀 Attempting to join ${code}...`);
+        stompClient.send("/app/join", {}, JSON.stringify({ roomCode: code }));
+    }
+
+    function disconnect() {
+        if (stompClient) stompClient.disconnect();
+        setConnected(false);
+        document.getElementById("roomInfo").style.display = 'none';
+        document.getElementById("playerList").innerHTML = '<p style="color:#999; font-style: italic;">No active lobby</p>';
+        log("🔌 Disconnected from server.");
+    }
+
+    function setConnected(connected) {
+        document.getElementById("btnConnect").disabled = connected;
+        document.getElementById("btnDisconnect").disabled = !connected;
+        document.getElementById("btnJoin").disabled = !connected;
+        document.getElementById("btnCreate").disabled = !connected;
+        document.getElementById("status").innerText = connected ? "Status: CONNECTED 🟢" : "Status: Disconnected 🔴";
+        document.getElementById("status").style.color = connected ? "green" : "red";
+    }
+</script>
+</body>
+</html>
