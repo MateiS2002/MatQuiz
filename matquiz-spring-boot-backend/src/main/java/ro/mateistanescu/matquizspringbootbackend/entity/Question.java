@@ -1,7 +1,7 @@
 package ro.mateistanescu.matquizspringbootbackend.entity;
 
 import jakarta.persistence.*;
-import lombok.Data;
+import lombok.*;
 import org.hibernate.annotations.JdbcTypeCode;
 import org.hibernate.type.SqlTypes;
 
@@ -13,7 +13,11 @@ import java.util.List;
  */
 @Entity
 @Table(name = "questions")
-@Data
+@Getter
+@Setter
+@NoArgsConstructor
+@AllArgsConstructor
+@Builder
 public class Question {
     @Id
     @GeneratedValue( strategy = GenerationType.IDENTITY)
@@ -42,6 +46,7 @@ public class Question {
     @Column(name = "correct_index", nullable = false)
     private Integer correctIndex;
 
+    @Builder.Default
     @Column(name = "time_limit", nullable = false)
     private Integer timeLimit = 30; //seconds
 
@@ -59,9 +64,4 @@ public class Question {
 //    @OneToMany(mappedBy = "question", fetch = FetchType.LAZY)
 //    @OrderBy("answeredAt ASC")
 //    private List<PlayerAnswer> playerAnswers;
-
-    @PrePersist
-    protected void onCreate() {
-        postedAt = LocalDateTime.now();
-    }
 }

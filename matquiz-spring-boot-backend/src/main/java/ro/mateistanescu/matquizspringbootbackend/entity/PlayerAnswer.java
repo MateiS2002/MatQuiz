@@ -1,13 +1,17 @@
 package ro.mateistanescu.matquizspringbootbackend.entity;
 
 import jakarta.persistence.*;
-import lombok.Data;
+import lombok.*;
 
 import java.time.LocalDateTime;
 
 @Entity
 @Table(name = "player_answers")
-@Data
+@Getter
+@Setter
+@Builder
+@NoArgsConstructor
+@AllArgsConstructor
 public class PlayerAnswer {
     @Id
     @GeneratedValue(strategy = GenerationType.IDENTITY)

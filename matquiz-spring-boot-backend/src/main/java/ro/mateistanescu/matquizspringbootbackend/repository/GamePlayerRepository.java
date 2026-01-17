@@ -15,7 +15,7 @@ import java.util.Optional;
 public interface GamePlayerRepository extends JpaRepository<GamePlayer, Long> {
     Optional<GamePlayer> findByUserAndGameRoom(User user, GameRoom gameRoom);
 
-    Optional<GamePlayer> findBySocketSessionId(String socketSessionId);
+    List<GamePlayer> findBySocketSessionId(String socketSessionId);
 
     @Query("SELECT gp FROM GamePlayer gp " +
             "JOIN gp.gameRoom gr " +

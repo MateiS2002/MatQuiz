@@ -1,11 +1,13 @@
 package ro.mateistanescu.matquizspringbootbackend.mapper;
 
 import org.springframework.stereotype.Component;
+import ro.mateistanescu.matquizspringbootbackend.dtos.QuestionDto;
 import ro.mateistanescu.matquizspringbootbackend.dtos.UserSummaryDto;
 import ro.mateistanescu.matquizspringbootbackend.dtos.GamePlayerDto;
 import ro.mateistanescu.matquizspringbootbackend.dtos.GameRoomDto;
 import ro.mateistanescu.matquizspringbootbackend.entity.GamePlayer;
 import ro.mateistanescu.matquizspringbootbackend.entity.GameRoom;
+import ro.mateistanescu.matquizspringbootbackend.entity.Question;
 
 import java.util.stream.Collectors;
 
@@ -17,6 +19,7 @@ public class GameMapper {
                 .roomCode(room.getRoomCode())
                 .topic(room.getTopic())
                 .difficulty(room.getDifficulty())
+                .status(room.getStatus())
                 .host(UserSummaryDto.builder()
                         .username(room.getHost().getUsername())
                         .avatarUrl(room.getHost().getAvatarUrl())
@@ -33,6 +36,15 @@ public class GameMapper {
                 .score(player.getScore())
                 .isConnected(player.getIsConnected())
                 .avatarUrl(player.getUser().getAvatarUrl())
+                .build();
+    }
+
+    public QuestionDto toQuestionDto(Question question) {
+        return QuestionDto.builder()
+                .questionId(question.getId())
+                .question_text(question.getQuestionText())
+                .answers(question.getAnswers())
+                .order_index(question.getOrderIndex())
                 .build();
     }
 }
