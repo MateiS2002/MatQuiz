@@ -160,7 +160,8 @@ public class GameService {
 
         int nextIndex = currentIndex + 1;
 
-        if(nextIndex > room.getQuestions().size()) {
+        //TODO: Fix the latest question not being able to answer cause game is finishing prematurly
+        if(nextIndex >= room.getQuestions().size()) {
             log.info("All questions answered in room {}. Game finishing...", roomCode);
             room.setStatus(GameStatus.FINISHED);
         }
