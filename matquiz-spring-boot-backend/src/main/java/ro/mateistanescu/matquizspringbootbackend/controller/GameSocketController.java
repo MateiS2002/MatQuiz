@@ -14,7 +14,6 @@ import ro.mateistanescu.matquizspringbootbackend.dtos.QuestionDto;
 import ro.mateistanescu.matquizspringbootbackend.dtos.socket.*;
 import ro.mateistanescu.matquizspringbootbackend.entity.GameRoom;
 import ro.mateistanescu.matquizspringbootbackend.entity.PlayerAnswer;
-import ro.mateistanescu.matquizspringbootbackend.entity.Question;
 import ro.mateistanescu.matquizspringbootbackend.entity.User;
 import ro.mateistanescu.matquizspringbootbackend.enums.GameStatus;
 import ro.mateistanescu.matquizspringbootbackend.mapper.GameMapper;
@@ -198,7 +197,7 @@ public class GameSocketController {
         User user = getUser(principal);
 
         try {
-            GameRoom room = gameService.startGame(user, request);
+            GameRoom room = gameService.startGame(request);
 
             if(room != null){
                 GameRoomDto roomDto = gameMapper.toDto(room);
@@ -261,7 +260,7 @@ public class GameSocketController {
         try {
             PlayerAnswer answer = gameService.submitAnswer(user, request, clientSentRequestAt);
 
-            // Send result only to the player who answered
+            // Send a result only to the player who answered
             AnswerResultDto result = AnswerResultDto.builder()
                     .questionId(answer.getQuestion().getId())
                     .isCorrect(answer.getIsCorrect())

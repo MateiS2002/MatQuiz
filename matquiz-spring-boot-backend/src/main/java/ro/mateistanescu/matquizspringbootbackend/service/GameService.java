@@ -1,15 +1,11 @@
 package ro.mateistanescu.matquizspringbootbackend.service;
 
-import lombok.Builder;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
 import org.apache.commons.lang3.RandomStringUtils;
-import org.springframework.context.annotation.Lazy;
-import org.springframework.messaging.simp.SimpMessagingTemplate;
 import org.springframework.scheduling.TaskScheduler;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
-import ro.mateistanescu.matquizspringbootbackend.dtos.GameRoomDto;
 import ro.mateistanescu.matquizspringbootbackend.dtos.QuestionDto;
 import ro.mateistanescu.matquizspringbootbackend.dtos.socket.AnswerSubmissionRequest;
 import ro.mateistanescu.matquizspringbootbackend.dtos.socket.GenerateQuizRequest;
@@ -23,22 +19,18 @@ import ro.mateistanescu.matquizspringbootbackend.repository.GamePlayerRepository
 import ro.mateistanescu.matquizspringbootbackend.repository.GameRoomRepository;
 import ro.mateistanescu.matquizspringbootbackend.repository.PlayerAnswerRepository;
 import ro.mateistanescu.matquizspringbootbackend.repository.QuestionRepository;
-import ro.mateistanescu.matquizspringbootbackend.repository.UserRepository;
 
 import java.time.Duration;
 import java.time.Instant;
-import java.time.LocalDate;
 import java.time.LocalDateTime;
 import java.util.ArrayList;
 import java.util.List;
-import java.util.concurrent.ScheduledFuture;
 
 @Service
 @RequiredArgsConstructor
 @Slf4j
 public class GameService {
 
-    private final SimpMessagingTemplate messagingTemplate;
     private final GameRoomRepository gameRoomRepository;
     private final GamePlayerRepository gamePlayerRepository;
     private final QuestionRepository questionRepository;
@@ -46,7 +38,6 @@ public class GameService {
     private final QuestionGeneratorService questionGeneratorService;
     private final GameMapper gameMapper;
     private final TaskScheduler taskScheduler;
-    private final UserRepository userRepository;
     private final FinishGameService finishGameService;
 
     private static final int MAX_PLAYERS = 5;
@@ -125,7 +116,7 @@ public class GameService {
     }
 
     @Transactional
-    public GameRoom startGame(User user, StartGameRequest request) {
+    public GameRoom startGame(StartGameRequest request) {
         String roomCode = request.getRoomCode().trim().toUpperCase();
 
         GameRoom room = gameRoomRepository.findByRoomCode(roomCode)
@@ -185,7 +176,7 @@ public class GameService {
 
         // If this is the last question, schedule the game to finish after timeout
         if (isLastQuestion) {
-            scheduleGameFinish(roomCode, room.getRoomCode());
+            scheduleGameFinish(roomCode);
         }
 
         return gameMapper.toQuestionDto(question);
@@ -199,7 +190,7 @@ public class GameService {
         GameRoom room = gameRoomRepository.findByRoomCode(roomCode)
                 .orElseThrow(() -> new IllegalArgumentException("Room " + roomCode + " not found!"));
 
-        // Verify game is in progress
+        // Verify the game is in progress
         if(room.getStatus() != GameStatus.PLAYING){
             throw new IllegalStateException("Cannot submit answers. Game is not in PLAYING state!");
         }
@@ -398,14 +389,14 @@ public class GameService {
                 return null; // Room no longer exists
             } else {
                 // Transfer host to the next player
-                GamePlayer newHost = room.getPlayers().get(0);
+                GamePlayer newHost = room.getPlayers().getFirst();
                 room.setHost(newHost.getUser());
                 gameRoomRepository.save(room);
                 log.info("Host transferred to {} in room {}", newHost.getUser().getUsername(), roomCode);
             }
         }
 
-        // If room still exists and has players, return updated room
+        // If a room still exists and has players, return the updated room
         if (!room.getPlayers().isEmpty()) {
             return fetchFullRoom(roomCode);
         } else {
@@ -438,7 +429,7 @@ public class GameService {
             // Delete player from database first
             gamePlayerRepository.delete(player);
 
-            // Refresh room to get updated player list
+            // Refresh room to get an updated player list
             gameRoomRepository.flush();
 
             // Handle host transfer or room deletion
@@ -449,7 +440,7 @@ public class GameService {
                     log.info("Host left and room {} is empty. Deleting room", roomCode);
                     gameRoomRepository.delete(room);
                 } else {
-                    GamePlayer newHost = room.getPlayers().get(0);
+                    GamePlayer newHost = room.getPlayers().getFirst();
                     room.setHost(newHost.getUser());
                     gameRoomRepository.save(room);
                     log.info("Host transferred to {} in room {}.", newHost.getUser().getUsername(), roomCode);
@@ -493,7 +484,7 @@ public class GameService {
      * This is called when the last question is fetched to allow players
      * time to answer with a network delay buffer.
      */
-    private void scheduleGameFinish(String roomCode, String originalRoomCode) {
+    private void scheduleGameFinish(String originalRoomCode) {
         log.info("Scheduling game finish for room {} in {} ms", originalRoomCode, GAME_FINISH_TIMEOUT_MS);
 
         Instant scheduledTime = Instant.now().plusMillis(GAME_FINISH_TIMEOUT_MS);
