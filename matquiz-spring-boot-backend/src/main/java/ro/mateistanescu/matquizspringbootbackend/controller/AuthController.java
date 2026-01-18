@@ -55,6 +55,7 @@ public class AuthController {
                 .username(user.getUsername())
                 .email(user.getEmail())
                 .role(user.getRole())
+                .eloRating(user.getEloRating())
                 .avatarUrl(user.getAvatarUrl())
                 .build());
     }

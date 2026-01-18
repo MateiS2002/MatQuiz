@@ -4,7 +4,9 @@ import lombok.Builder;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
 import org.apache.commons.lang3.RandomStringUtils;
+import org.springframework.context.annotation.Lazy;
 import org.springframework.messaging.simp.SimpMessagingTemplate;
+import org.springframework.scheduling.TaskScheduler;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 import ro.mateistanescu.matquizspringbootbackend.dtos.GameRoomDto;
@@ -21,11 +23,14 @@ import ro.mateistanescu.matquizspringbootbackend.repository.GamePlayerRepository
 import ro.mateistanescu.matquizspringbootbackend.repository.GameRoomRepository;
 import ro.mateistanescu.matquizspringbootbackend.repository.PlayerAnswerRepository;
 import ro.mateistanescu.matquizspringbootbackend.repository.QuestionRepository;
+import ro.mateistanescu.matquizspringbootbackend.repository.UserRepository;
 
 import java.time.Duration;
+import java.time.Instant;
 import java.time.LocalDateTime;
 import java.util.ArrayList;
 import java.util.List;
+import java.util.concurrent.ScheduledFuture;
 
 @Service
 @RequiredArgsConstructor
@@ -39,8 +44,15 @@ public class GameService {
     private final PlayerAnswerRepository playerAnswerRepository;
     private final QuestionGeneratorService questionGeneratorService;
     private final GameMapper gameMapper;
+    private final TaskScheduler taskScheduler;
+    private final UserRepository userRepository;
+
+    //Self injection for the finish game logic keep only if safe
+    @Lazy
+    private GameService self;
 
     private static final int MAX_PLAYERS = 5;
+    private static final long GAME_FINISH_TIMEOUT_MS = 32000; // 32 seconds: 30s question time + 2s buffer
 
     /**
      * Creates a blank lobby for the host.
@@ -160,11 +172,8 @@ public class GameService {
 
         int nextIndex = currentIndex + 1;
 
-        //TODO: Fix the latest question not being able to answer cause game is finishing prematurly
-        if(nextIndex >= room.getQuestions().size()) {
-            log.info("All questions answered in room {}. Game finishing...", roomCode);
-            room.setStatus(GameStatus.FINISHED);
-        }
+        // Check if this is the last question
+        boolean isLastQuestion = nextIndex >= room.getQuestions().size();
 
         room.setCurrentQuestionIndex(nextIndex);
 
@@ -174,6 +183,11 @@ public class GameService {
 
         log.info("Fetched question {} of {} for room {}",
                 currentIndex + 1, room.getQuestions().size(), roomCode);
+
+        // If this is the last question, schedule the game to finish after timeout
+        if (isLastQuestion) {
+            scheduleGameFinish(roomCode, room.getRoomCode());
+        }
 
         return gameMapper.toQuestionDto(question);
     }
@@ -473,5 +487,69 @@ public class GameService {
     public GameRoom fetchFullRoom(String roomCode) {
         return gameRoomRepository.findWithDetailsByRoomCode(roomCode)
                 .orElseThrow(() -> new IllegalStateException("Room not found during fetch"));
+    }
+
+    /**
+     * Schedules the game to finish after a timeout (32 seconds).
+     * This is called when the last question is fetched to allow players
+     * time to answer with a network delay buffer.
+     */
+    private void scheduleGameFinish(String roomCode, String originalRoomCode) {
+        log.info("Scheduling game finish for room {} in {} ms", originalRoomCode, GAME_FINISH_TIMEOUT_MS);
+
+        //TODO: Change the self injection logic or if safe keep it
+        Instant scheduledTime = Instant.now().plusMillis(GAME_FINISH_TIMEOUT_MS);
+        taskScheduler.schedule(() -> self.finishGameAfterTimeout(originalRoomCode), scheduledTime);
+    }
+
+    /**
+     * Finishes the game and updates user statistics.
+     * Called automatically after the last question timeout.
+     */
+    @Transactional
+    public void finishGameAfterTimeout(String roomCode) {
+        try {
+            GameRoom room = gameRoomRepository.findByRoomCode(roomCode)
+                    .orElse(null);
+
+            if (room == null) {
+                log.warn("Room {} not found when trying to finish game", roomCode);
+                return;
+            }
+
+            // Only finish if still playing (in case game was already finished manually)
+            if (room.getStatus() != GameStatus.PLAYING) {
+                log.info("Room {} is not in PLAYING state, skipping finish", roomCode);
+                return;
+            }
+
+            log.info("Finishing game for room {}", roomCode);
+
+            // Set game status to finished
+            room.setStatus(GameStatus.FINISHED);
+            gameRoomRepository.save(room);
+
+            // Update user statistics for all players
+            for (GamePlayer player : room.getPlayers()) {
+                User user = player.getUser();
+                user.setTotalGamesPlayed(user.getTotalGamesPlayed() + 1);
+                user.setLastGamePoints(player.getScore());
+                userRepository.save(user);
+                log.info("Updated stats for user {}: totalGames={}, lastGamePoints={}",
+                        user.getUsername(), user.getTotalGamesPlayed(), user.getLastGamePoints());
+            }
+
+            // Broadcast final room state to all players
+            GameRoomDto roomDto = gameMapper.toDto(room);
+            messagingTemplate.convertAndSend(
+                    "/topic/room/" + roomCode,
+                    roomDto
+            );
+
+            log.info("Game finished for room {}. Final results broadcasted.", roomCode);
+
+        } catch (Exception e) {
+            log.error("Error finishing game for room {}: {}", roomCode, e.getMessage(), e);
+        }
     }
 }

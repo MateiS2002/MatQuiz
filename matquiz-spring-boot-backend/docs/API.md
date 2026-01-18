@@ -331,8 +331,12 @@ All game-related communication happens via **STOMP over WebSockets**.
 **Minimal user info (used for host display).**
 
 ```json
-{
+{ 
+  "id": 1,
   "username": "matei",
+  "email": "example@gmail.com",
+  "role": "admin",
+  "eloRating": 1000,
   "avatarUrl": "https://..."
 }
 ```

@@ -247,6 +247,10 @@ public class GameSocketController {
         }
     }
 
+    /**
+     * 8. SUBMIT ANSWER
+     *
+     */
     @MessageMapping("/submitAnswer")
     public void submitAnswer(@Payload AnswerSubmissionRequest request, Principal principal) {
         if(principal == null) return;
