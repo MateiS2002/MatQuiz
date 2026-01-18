@@ -21,6 +21,7 @@ import ro.mateistanescu.matquizspringbootbackend.mapper.GameMapper;
 import ro.mateistanescu.matquizspringbootbackend.service.GameService;
 
 import java.security.Principal;
+import java.time.LocalDateTime;
 
 @Controller
 @RequiredArgsConstructor
@@ -255,9 +256,10 @@ public class GameSocketController {
     public void submitAnswer(@Payload AnswerSubmissionRequest request, Principal principal) {
         if(principal == null) return;
         User user = getUser(principal);
+        LocalDateTime clientSentRequestAt = LocalDateTime.now();
 
         try {
-            PlayerAnswer answer = gameService.submitAnswer(user, request);
+            PlayerAnswer answer = gameService.submitAnswer(user, request, clientSentRequestAt);
 
             // Send result only to the player who answered
             AnswerResultDto result = AnswerResultDto.builder()
