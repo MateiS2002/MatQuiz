@@ -7,10 +7,7 @@ import org.springframework.scheduling.TaskScheduler;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 import ro.mateistanescu.matquizspringbootbackend.dtos.QuestionDto;
-import ro.mateistanescu.matquizspringbootbackend.dtos.socket.AnswerSubmissionRequest;
-import ro.mateistanescu.matquizspringbootbackend.dtos.socket.GenerateQuizRequest;
-import ro.mateistanescu.matquizspringbootbackend.dtos.socket.QuestionRequest;
-import ro.mateistanescu.matquizspringbootbackend.dtos.socket.StartGameRequest;
+import ro.mateistanescu.matquizspringbootbackend.dtos.socket.*;
 import ro.mateistanescu.matquizspringbootbackend.entity.*;
 import ro.mateistanescu.matquizspringbootbackend.enums.Difficulty;
 import ro.mateistanescu.matquizspringbootbackend.enums.GameStatus;
@@ -405,6 +402,22 @@ public class GameService {
             gameRoomRepository.delete(room);
             return null;
         }
+    }
+
+    @Transactional
+    public void endGameEarly(User user, EndGameEarlyRequest request) {
+        GameRoom room = gameRoomRepository.findByRoomCode(request.getRoomCode())
+                .orElseThrow(() -> new IllegalArgumentException("Room not found"));
+
+        if(!room.getHost().getId().equals(user.getId())) {
+            throw new IllegalStateException("Only the host can end the game early!");
+        }
+
+        if (room.getStatus() == GameStatus.FINISHED) {
+            throw new IllegalStateException("Game is already finished!");
+        }
+
+        gameRoomRepository.delete(room);
     }
 
     /**

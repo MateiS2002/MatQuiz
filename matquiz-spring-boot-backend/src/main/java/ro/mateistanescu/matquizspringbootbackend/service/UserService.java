@@ -49,7 +49,7 @@ public class UserService {
     }
 
     /**
-     * Validates JWT and retrieves User object from database.
+     * Validates JWT and retrieves a User object from the database.
      */
     public User validateUser(String token) {
         String username = jwtService.validateToken(token);

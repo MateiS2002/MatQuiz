@@ -154,6 +154,41 @@ public class GameSocketController {
         );
     }
 
+//    /**
+//     * 5. KICK A PLAYER
+//     *
+//     */
+//    @MessageMapping("/kick")
+//    public void kickPlayer(Principal principal) {
+//        User user = getUser(principal);
+//
+//        //TODO: Decide if i need this endpoint, for the mvp this is not necessary
+//    }
+
+    /**
+     * 6. END GAME EARLY
+     *
+     */
+    @MessageMapping("/endGame")
+    public void endGame(@Payload EndGameEarlyRequest request, Principal principal) {
+        if(principal == null) return;
+        User user = getUser(principal);
+
+        try{
+            // Broadcast END_GAME_EARLY message BEFORE deletion
+            messagingTemplate.convertAndSend(
+                    "/topic/room/" + request.getRoomCode(),
+                    "END_GAME_EARLY"
+            );
+
+            gameService.endGameEarly(user, request);
+
+        } catch (Exception e){
+            sendError(user.getUsername(), "End game failed: " + e.getMessage());
+        }
+    }
+
+
     /**
      * 5. GENERATE QUIZ
      * Client sends: /app/generate
@@ -291,6 +326,8 @@ public class GameSocketController {
             sendError(user.getUsername(), "Answer submission failed: " + e.getMessage());
         }
     }
+
+
 
 
     private User getUser(Principal principal) {
