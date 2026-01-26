@@ -24,4 +24,5 @@ public interface GamePlayerRepository extends JpaRepository<GamePlayer, Long> {
             "ORDER BY gp.joinedAt DESC")
     List<GamePlayer> findAllActiveGamesForUser(String username, GameStatus status);
 
+    List<GamePlayer> findAllByGameRoom(GameRoom gameRoom);
 }

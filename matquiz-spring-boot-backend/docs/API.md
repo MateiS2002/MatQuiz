@@ -169,7 +169,68 @@ All game-related communication happens via **STOMP over WebSockets**.
 
 ---
 
-### 9. Automatic Events (Server-Initiated)
+### 9. Request Correct Answer
+**Host requests to reveal the correct answer for the current question.**
+
+- **Destination:** `/app/correctAnswer`
+- **Payload:**
+  ```json
+  {
+    "roomCode": "ABC12",
+    "questionId": 123
+  }
+  ```
+- **Public Broadcast:** `/topic/room/{roomCode}` → `CorrectAnswerDto`
+- **Public Broadcast:** `/topic/room/{roomCode}` → `GameRoomDto` (updated scores)
+- **Behavior:**
+    - Only the host can request the correct answer.
+    - Identifies players who haven't answered the question.
+    - Automatically assigns 0 points to players who didn't answer.
+    - Sends a "FAILED ANSWER" message to each player who missed the question via `/user/queue/failed_answer`.
+    - Broadcasts the correct answer to all players.
+    - Broadcasts updated room state with final scores for the question.
+
+---
+
+### 10. Request End Game Results
+**Host requests the final results after the game is finished.**
+
+- **Destination:** `/app/endResults`
+- **Payload:**
+  ```json
+  {
+    "roomCode": "ABC12"
+  }
+  ```
+- **Public Broadcast:** `/topic/room/{roomCode}` → `ResultsDto`
+- **Behavior:**
+    - Only the host can request end game results.
+    - Returns the final leaderboard with all player scores.
+    - Includes the end time of the game.
+
+---
+
+### 11. End Game Early
+**Host terminates the game before all questions are answered.**
+
+- **Destination:** `/app/endGame`
+- **Payload:**
+  ```json
+  {
+    "roomCode": "ABC12"
+  }
+  ```
+- **Public Broadcast:** `/topic/room/{roomCode}` → `String` ("END_GAME_EARLY")
+- **Behavior:**
+    - Only the host can end the game early.
+    - Cannot end a game that is already `FINISHED`.
+    - Broadcasts "END_GAME_EARLY" message to all players before deletion.
+    - The room is deleted from the database.
+    - All players are removed from the room.
+
+---
+
+### 12. Automatic Events (Server-Initiated)
 
 #### Disconnect Event
 **When a player's WebSocket connection closes.**
@@ -180,6 +241,14 @@ All game-related communication happens via **STOMP over WebSockets**.
     - Room state is broadcast to all remaining players.
     - Player data is retained (they can reconnect).
 
+#### Failed Answer Notification
+**When a player misses answering a question (host revealed correct answer).**
+
+- **Private Response:** `/user/queue/failed_answer` → `String` ("FAILED ANSWER")
+- **Behavior:**
+    - Sent to each player who didn't answer a question when the host reveals the correct answer.
+    - Indicates that 0 points were automatically assigned for that question.
+
 #### Error Messages
 **When an action fails.**
 
@@ -188,6 +257,10 @@ All game-related communication happens via **STOMP over WebSockets**.
     - "Room not found"
     - "Only the host can generate the quiz!"
     - "You have already answered this question!"
+    - "Only the host can request correct answers!"
+    - "Only the host can request room results!"
+    - "Only the host can end the game early!"
+    - "Game is already finished!"
 
 ---
 
@@ -232,8 +305,62 @@ All game-related communication happens via **STOMP over WebSockets**.
     "username": "matei",
     "email": "matei@example.com",
     "role": "USER",
+    "eloRating": 1000,
     "avatarUrl": "https://..."
   }
+  ```
+
+---
+
+### 4. Get Leaderboard (All Players)
+- **Endpoint:** `GET /api/auth/leaderboard`
+- **Headers:** `Authorization: Bearer <JWT_TOKEN>`
+- **Response:**
+  ```json
+  [
+    {
+      "rank": 1,
+      "username": "matei",
+      "eloRating": 1500
+    },
+    {
+      "rank": 2,
+      "username": "john",
+      "eloRating": 1200
+    }
+  ]
+  ```
+
+---
+
+### 5. Get Leaderboard (Specific User)
+- **Endpoint:** `POST /api/auth/leaderboard`
+- **Headers:** `Authorization: Bearer <JWT_TOKEN>`
+- **Payload:**
+  ```json
+  {
+    "username": "matei"
+  }
+  ```
+- **Response:**
+  ```json
+  [
+    {
+      "rank": 1,
+      "username": "matei",
+      "eloRating": 1500
+    }
+  ]
+  ```
+
+---
+
+### 6. Who Am I
+- **Endpoint:** `GET /api/auth/whoami`
+- **Headers:** `Authorization: Bearer <JWT_TOKEN>`
+- **Response:** `String`
+  ```
+  You are: matei with authorities [ROLE_USER]
   ```
 
 ---
@@ -310,6 +437,68 @@ All game-related communication happens via **STOMP over WebSockets**.
   "newTotalScore": 250
 }
 ```
+
+---
+
+### `CorrectAnswerDto`
+**Sent when the host reveals the correct answer for a question.**
+
+```json
+{
+  "questionId": 42,
+  "correctAnswer": 1
+}
+```
+
+**Notes:**
+- Contains the correct answer index for the specified question.
+- Broadcast to all players in the room when the host requests the correct answer.
+
+---
+
+### `ResultsDto`
+**Sent when the host requests the final game results.**
+
+```json
+{
+  "endTime": "2026-01-17T15:30:00",
+  "players": [
+    {
+      "nickname": "matei",
+      "score": 500,
+      "isConnected": true,
+      "avatarUrl": "https://..."
+    },
+    {
+      "nickname": "john",
+      "score": 300,
+      "isConnected": true,
+      "avatarUrl": "https://..."
+    }
+  ]
+}
+```
+
+**Notes:**
+- `endTime` is the timestamp when the results were requested.
+- `players` is an array of all players with their final scores.
+
+---
+
+### `LeaderboardDto`
+**Represents a single entry in the global leaderboard.**
+
+```json
+{
+  "rank": 1,
+  "username": "matei",
+  "eloRating": 1500
+}
+```
+
+**Notes:**
+- `rank` is the player's position in the leaderboard.
+- `eloRating` is the player's current ELO rating.
 
 ---
 
@@ -396,16 +585,74 @@ All game-related communication happens via **STOMP over WebSockets**.
 
 ---
 
+### `CorrectAnswerRequest`
+```json
+{
+  "roomCode": "ABC12",
+  "questionId": 123
+}
+```
+
+---
+
+### `ResultsRequest`
+```json
+{
+  "roomCode": "ABC12"
+}
+```
+
+---
+
+### `EndGameEarlyRequest`
+```json
+{
+  "roomCode": "ABC12"
+}
+```
+
+---
+
+### `LeaderboardRequestDto`
+```json
+{
+  "username": "matei"
+}
+```
+
+**Notes:**
+- Used when requesting a specific user's leaderboard entry.
+- If `username` is `null`, the full leaderboard is returned (use GET endpoint instead).
+
+---
+
 ## Game Flow Example
 
+### Standard Game Flow
 1. **Matei** creates a room → Receives `GameRoomDto` (status: `WAITING`)
 2. **John** joins via `/app/join` → Both receive updated `GameRoomDto`
 3. **Matei** generates quiz → Status changes to `GENERATING`, then `READY`
 4. **Matei** starts game → Status changes to `PLAYING`
 5. **Matei** requests question → All players receive `QuestionDto`
 6. **John** submits answer → Receives `AnswerResultDto`, all players see updated scores
-7. Repeat step 5-6 for all questions
-8. After last question → Status changes to `FINISHED`, final `GameRoomDto` with leaderboard
+7. **Matei** requests correct answer → All players receive `CorrectAnswerDto`, players who missed get "FAILED ANSWER" notification
+8. Repeat step 5-7 for all questions
+9. After last question → Status changes to `FINISHED`, final `GameRoomDto` with leaderboard
+10. **Matei** requests end results → All players receive `ResultsDto` with final leaderboard
+
+### Early Termination Flow
+1. **Matei** creates a room → Receives `GameRoomDto` (status: `WAITING`)
+2. **John** joins via `/app/join` → Both receive updated `GameRoomDto`
+3. **Matei** generates quiz → Status changes to `GENERATING`, then `READY`
+4. **Matei** starts game → Status changes to `PLAYING`
+5. **Matei** requests question → All players receive `QuestionDto`
+6. **John** submits answer → Receives `AnswerResultDto`, all players see updated scores
+7. **Matei** ends game early → All players receive "END_GAME_EARLY" message, room is deleted
+
+### Reconnection Flow
+1. **Matei** is in an active game and disconnects
+2. **Matei** reconnects via `/app/reconnect` → Receives `GameRoomDto` of active game
+3. All players in the room receive updated `GameRoomDto` with `isConnected: true` for Matei
 
 ---
 
@@ -419,18 +666,83 @@ All errors are sent to `/user/queue/errors` as plain `String` messages.
 - `"You cannot join a game that is already PLAYING"`
 - `"Invalid question index: 5"`
 - `"You have already answered this question!"`
+- `"Only the host can request correct answers!"`
+- `"Only the host can request room results!"`
+- `"Only the host can end the game early!"`
+- `"Game is already finished!"`
+- `"Game cannot be started because it is not in READY state!"`
+- `"Questions cannot be fetched because the room is not in PLAYING state!"`
+- `"Cannot submit answers. Game is not in PLAYING state!"`
+- `"Player not found in this room!"`
+- `"Topic cannot be empty!"`
+- `"Difficulty cannot be empty!"`
+- `"Only EASY and ADVANCED difficulties are supported!"`
+- `"The quiz can be only generated when the room is waiting! Another quiz might have been generated already."`
+- `"Room is full! (Max 5 players)"`
+- `"Player is not in this room!"`
+- `"User not found"`
+
+**Automatic Notifications:**
+- `"FAILED ANSWER"` → Sent to `/user/queue/failed_answer` when a player misses answering a question
+- `"END_GAME_EARLY"` → Sent to `/topic/room/{roomCode}` when the host terminates the game early
 
 ---
 
 ## Notes for Frontend
 
+### WebSocket Connection
 - Always normalize room codes to **uppercase** before sending.
 - Subscribe to `/topic/room/{roomCode}` to receive real-time updates.
-- The `QuestionDto` does **not** include the correct answer—it's only revealed in `AnswerResultDto` after submission.
+- Subscribe to `/user/queue/created` to receive confirmation when creating a room.
+- Subscribe to `/user/queue/joined` to receive confirmation when joining a room.
+- Subscribe to `/user/queue/reconnected` to receive confirmation when reconnecting.
+- Subscribe to `/user/queue/left` to receive confirmation when leaving a room.
+- Subscribe to `/user/queue/answerResult` to receive answer results after submitting.
+- Subscribe to `/user/queue/failed_answer` to receive notifications when missing a question.
+- Subscribe to `/user/queue/errors` to receive error messages.
+
+### Game Flow
+- The `QuestionDto` does **not** include the correct answer—it's only revealed in `AnswerResultDto` after submission or in `CorrectAnswerDto` when the host requests it.
 - Player `isConnected` status updates in real-time when users disconnect.
 - Use `submissionTime` from the client to allow server-side anti-cheat validation (time-based scoring in the future).
+- After the host requests the correct answer, players who missed the question will receive a "FAILED ANSWER" notification and 0 points are automatically assigned.
+- The game automatically finishes after all questions have been answered (32-second timeout after the last question is posted).
+- The host can end the game early at any time using `/app/endGame`, which will delete the room.
+
+### Question Timing
+- Questions have a 30-second time limit.
+- Time taken is calculated from `question.postedAt` to `submissionTime`.
+- If a player doesn't answer within the time limit, they receive 0 points when the host reveals the correct answer.
+
+### Leaderboard
+- Use `GET /api/auth/leaderboard` to retrieve the full global leaderboard.
+- Use `POST /api/auth/leaderboard` with a username to retrieve a specific user's ranking.
+- Leaderboard is based on ELO ratings.
+
+### Error Handling
+- Always subscribe to `/user/queue/errors` to handle error cases gracefully.
+- Display user-friendly error messages based on the received error strings.
+- Handle the "END_GAME_EARLY" message by redirecting users to the lobby or home screen.
+
+### Session Management
+- Use `GET /api/auth/session` to retrieve the current user's session information.
+- Use `GET /api/auth/whoami` to verify authentication and get user details.
+- Store the JWT token securely and include it in the WebSocket connection headers.
+
+### Room Management
+- Maximum 5 players per room.
+- Players cannot join rooms with status `PLAYING` or `FINISHED`.
+- When the host leaves, the host is transferred to the next player.
+- When the last player leaves, the room is deleted.
+- Players can reconnect to active games using `/app/reconnect`.
+
+### Quiz Generation
+- Only the host can generate the quiz.
+- Quiz can only be generated when the room status is `WAITING`.
+- Supported difficulties: `EASY`, `ADVANCED`.
+- Room status transitions: `WAITING` → `GENERATING` → `READY` → `PLAYING` → `FINISHED`.
 
 ---
 
-**Last Updated:** 2026-01-17
+**Last Updated:** 2026-01-20
 ```

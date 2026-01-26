@@ -6,7 +6,10 @@ import org.apache.commons.lang3.RandomStringUtils;
 import org.springframework.scheduling.TaskScheduler;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
+import ro.mateistanescu.matquizspringbootbackend.dtos.CorrectAnswerDto;
+import ro.mateistanescu.matquizspringbootbackend.dtos.GamePlayerDto;
 import ro.mateistanescu.matquizspringbootbackend.dtos.QuestionDto;
+import ro.mateistanescu.matquizspringbootbackend.dtos.ResultsDto;
 import ro.mateistanescu.matquizspringbootbackend.dtos.socket.*;
 import ro.mateistanescu.matquizspringbootbackend.entity.*;
 import ro.mateistanescu.matquizspringbootbackend.enums.Difficulty;
@@ -36,6 +39,7 @@ public class GameService {
     private final GameMapper gameMapper;
     private final TaskScheduler taskScheduler;
     private final FinishGameService finishGameService;
+    private final FailedAnswerService failedAnswerService;
 
     private static final int MAX_PLAYERS = 5;
     private static final long GAME_FINISH_TIMEOUT_MS = 32000; // 32 seconds: 30s question time + 2s buffer
@@ -258,6 +262,77 @@ public class GameService {
         return answer;
     }
 
+    @Transactional
+    public CorrectAnswerDto submitCorrectAnswer(User user, CorrectAnswerRequest request) {
+        GameRoom room = gameRoomRepository.findByRoomCode(request.getRoomCode())
+                .orElseThrow(() -> new IllegalArgumentException("Room not found!"));
+
+        if (!room.getHost().getId().equals(user.getId())) {
+            throw new IllegalStateException("Only the host can request correct answers!");
+        }
+
+        Question question = questionRepository.findById(request.getQuestionId())
+                .orElseThrow(() -> new IllegalArgumentException("Question not found!"));
+
+        // Check if all players have answered
+        List<PlayerAnswer> existingAnswers = playerAnswerRepository.findByQuestionAndGameRoom(question, room);
+        List<GamePlayer> players = room.getPlayers();
+
+        // Identify players who haven't answered
+        List<GamePlayer> playersWithoutAnswers = players.stream()
+                .filter(player -> existingAnswers.stream()
+                        .noneMatch(answer -> answer.getGamePlayer().getId().equals(player.getId())))
+                .toList();
+
+        // Create 0-point answers for players who didn't answer
+        for (GamePlayer player : playersWithoutAnswers) {
+            PlayerAnswer missedAnswer = PlayerAnswer.builder()
+                    .gamePlayer(player)
+                    .question(question)
+                    .selectedIndex(null)
+                    .isCorrect(false)
+                    .pointsAwarded(0)
+                    .timeTakenMs(30000)
+                    .answeredAt(LocalDateTime.now())
+                    .build();
+
+            playerAnswerRepository.save(missedAnswer);
+
+            //send ws message to notify user of missed answer
+            failedAnswerService.sendFailedAnswerMessageToUser(player.getUser().getId());
+
+            log.info("Player {} did not answer question {} in room {}. Assigned 0 points.",
+                    player.getNickname(), question.getId(), room.getRoomCode());
+        }
+
+        return gameMapper.toCorrectAnswerDto(question);
+    }
+
+    @Transactional
+    public ResultsDto fetchRoomResults(User user, ResultsRequest request) {
+        GameRoom room = gameRoomRepository.findByRoomCode(request.getRoomCode())
+                .orElseThrow(() -> new IllegalArgumentException("Room not found"));
+
+        if (!room.getHost().getId().equals(user.getId())) {
+            throw new IllegalStateException("Only the host can request room results!");
+        }
+
+        List<GamePlayer> players = room.getPlayers();
+
+        List<GamePlayerDto> playerDtos = players.stream()
+                .map(player -> GamePlayerDto.builder()
+                        .nickname(player.getNickname())
+                        .score(player.getScore())
+                        .isConnected(player.getIsConnected())
+                        .avatarUrl(player.getUser().getAvatarUrl())
+                        .build())
+                .toList();
+
+        return ResultsDto.builder()
+                .endTime(LocalDateTime.now())
+                .players(playerDtos)
+                .build();
+    }
 
     @Transactional
     public GameRoom requestQuizGeneration(User user, GenerateQuizRequest request) {

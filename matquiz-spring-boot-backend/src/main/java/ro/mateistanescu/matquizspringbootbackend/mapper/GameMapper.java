@@ -1,10 +1,7 @@
 package ro.mateistanescu.matquizspringbootbackend.mapper;
 
 import org.springframework.stereotype.Component;
-import ro.mateistanescu.matquizspringbootbackend.dtos.QuestionDto;
-import ro.mateistanescu.matquizspringbootbackend.dtos.UserSummaryDto;
-import ro.mateistanescu.matquizspringbootbackend.dtos.GamePlayerDto;
-import ro.mateistanescu.matquizspringbootbackend.dtos.GameRoomDto;
+import ro.mateistanescu.matquizspringbootbackend.dtos.*;
 import ro.mateistanescu.matquizspringbootbackend.entity.GamePlayer;
 import ro.mateistanescu.matquizspringbootbackend.entity.GameRoom;
 import ro.mateistanescu.matquizspringbootbackend.entity.Question;
@@ -45,6 +42,13 @@ public class GameMapper {
                 .question_text(question.getQuestionText())
                 .answers(question.getAnswers())
                 .order_index(question.getOrderIndex())
+                .build();
+    }
+
+    public CorrectAnswerDto toCorrectAnswerDto(Question question) {
+        return CorrectAnswerDto.builder()
+                .questionId(question.getId())
+                .correctAnswer(question.getCorrectIndex())
                 .build();
     }
 }

@@ -8,9 +8,7 @@ import org.springframework.messaging.simp.SimpMessageHeaderAccessor;
 import org.springframework.messaging.simp.SimpMessagingTemplate;
 import org.springframework.security.authentication.UsernamePasswordAuthenticationToken;
 import org.springframework.stereotype.Controller;
-import ro.mateistanescu.matquizspringbootbackend.dtos.AnswerResultDto;
-import ro.mateistanescu.matquizspringbootbackend.dtos.GameRoomDto;
-import ro.mateistanescu.matquizspringbootbackend.dtos.QuestionDto;
+import ro.mateistanescu.matquizspringbootbackend.dtos.*;
 import ro.mateistanescu.matquizspringbootbackend.dtos.socket.*;
 import ro.mateistanescu.matquizspringbootbackend.entity.GameRoom;
 import ro.mateistanescu.matquizspringbootbackend.entity.PlayerAnswer;
@@ -190,7 +188,7 @@ public class GameSocketController {
 
 
     /**
-     * 5. GENERATE QUIZ
+     * 7. GENERATE QUIZ
      * Client sends: /app/generate
      * Payload: { "roomCode": "ABC", "topic": "Math", "difficulty": "EASY" }
      * Server returns: The Room DTO to update UI
@@ -222,7 +220,7 @@ public class GameSocketController {
 
 
     /**
-     * 6. START GAME
+     * 8. START GAME
      * Client sends: /app/start { "roomCode": "ABC123" }
      * Server returns: The Room DTO to update UI
      */
@@ -250,7 +248,7 @@ public class GameSocketController {
     }
 
     /**
-     * 7. REQUEST QUESTION
+     * 9. REQUEST QUESTION
      * Client sends: /app/requestQuestion { "roomCode": "ABC123" }
      * Server returns: The Question DTO
      * Client MUST be Host Of The Room
@@ -284,7 +282,6 @@ public class GameSocketController {
 
     /**
      * 8. SUBMIT ANSWER
-     *
      */
     @MessageMapping("/submitAnswer")
     public void submitAnswer(@Payload AnswerSubmissionRequest request, Principal principal) {
@@ -327,8 +324,63 @@ public class GameSocketController {
         }
     }
 
+    /**
+     * 9.REQUEST CORRECT ANSWER
+     */
+    @MessageMapping("/correctAnswer")
+    public void correctAnswer(@Payload CorrectAnswerRequest request, Principal principal) {
+        if(principal == null) return;
+        User user = getUser(principal);
 
+        try {
+            CorrectAnswerDto correctAnswerDto = gameService.submitCorrectAnswer(user, request);
 
+            // Broadcast the correct answer to all players in the room
+            messagingTemplate.convertAndSend(
+                    "/topic/room/" + request.getRoomCode().trim().toUpperCase(),
+                    correctAnswerDto
+            );
+
+            // Also broadcast updated room state to show final scores for this question
+            GameRoom room = gameService.fetchFullRoom(request.getRoomCode().trim().toUpperCase());
+            GameRoomDto roomDto = gameMapper.toDto(room);
+
+            messagingTemplate.convertAndSend(
+                    "/topic/room/" + request.getRoomCode().trim().toUpperCase(),
+                    roomDto
+            );
+
+            log.info("Correct answer broadcasted for room {} for question id: {}", request.getRoomCode(), request.getQuestionId());
+
+        } catch (Exception e) {
+            log.error("Correct answer request failed: {}", e.getMessage());
+            sendError(user.getUsername(), "Failed to reveal correct answer: " + e.getMessage());
+        }
+    }
+
+    /**
+     * 10. REQUEST END GAME RESULTS
+     */
+    @MessageMapping("/endResults")
+    public void endResults(@Payload ResultsRequest request, Principal principal) {
+        if(principal == null) return;
+        User user = getUser(principal);
+
+        try{
+            ResultsDto resultsDto = gameService.fetchRoomResults(user, request);
+
+            messagingTemplate.convertAndSend(
+                    "topic/room" + request.getRoomCode().trim().toUpperCase(),
+                    resultsDto
+            );
+
+            log.info("End game results broadcasted for room {}", request.getRoomCode());
+
+        } catch (Exception e) {
+            log.error("End game request failed: {}", e.getMessage());
+            sendError(user.getUsername(), "Failed to retrieve end game results: " + e.getMessage());
+        }
+    }
 
     private User getUser(Principal principal) {
         if (principal instanceof UsernamePasswordAuthenticationToken auth) {

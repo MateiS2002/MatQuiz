@@ -36,7 +36,7 @@ public class MockQuestionGenerator implements QuestionGeneratorService{
                     .gameRoom(room)
                     .questionText("Mock Question " + i + ": What is 2 + " + i + "?")
                     .answers(List.of("3", "4", "5", "6"))
-                    .correctIndex(1) // 0-based index
+                    .correctIndex(i-1) // 0-based index
                     .orderIndex(i)
                     .build();
             questions.add(q);
