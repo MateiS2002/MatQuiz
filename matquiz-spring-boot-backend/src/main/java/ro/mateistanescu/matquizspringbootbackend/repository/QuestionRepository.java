@@ -6,4 +6,5 @@ import ro.mateistanescu.matquizspringbootbackend.entity.Question;
 
 @Repository
 public interface QuestionRepository extends JpaRepository<Question, Long> {
+    void deleteAllByGameRoomId(Long gameRoomId);
 }

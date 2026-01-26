@@ -6,10 +6,7 @@ import org.apache.commons.lang3.RandomStringUtils;
 import org.springframework.scheduling.TaskScheduler;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
-import ro.mateistanescu.matquizspringbootbackend.dtos.CorrectAnswerDto;
-import ro.mateistanescu.matquizspringbootbackend.dtos.GamePlayerDto;
-import ro.mateistanescu.matquizspringbootbackend.dtos.QuestionDto;
-import ro.mateistanescu.matquizspringbootbackend.dtos.ResultsDto;
+import ro.mateistanescu.matquizspringbootbackend.dtos.*;
 import ro.mateistanescu.matquizspringbootbackend.dtos.socket.*;
 import ro.mateistanescu.matquizspringbootbackend.entity.*;
 import ro.mateistanescu.matquizspringbootbackend.enums.Difficulty;
@@ -367,6 +364,43 @@ public class GameService {
         questionGeneratorService.generateQuestions(room);
 
         return fetchFullRoom(request.getRoomCode());
+    }
+
+    @Transactional
+    public GameRoom processQuizResult(QuizResultMessage message) {
+        GameRoom room = gameRoomRepository.findByRoomCode(message.getRoomCode())
+                .orElseThrow(() -> new IllegalArgumentException("Room not found"));
+
+        if(room.getStatus() == GameStatus.GENERATING || room.getStatus() == GameStatus.READY) {
+            throw new IllegalStateException("The quiz can only be updated when the room is in GENERATING state!");
+        }
+
+        //if the quiz has been regenerated, for safety we delete the old questions for that room
+        questionRepository.deleteAllByGameRoomId(room.getId());
+
+        List<Question> questionEntities = new ArrayList<>();
+        for (int i = 0; i < message.getQuestions().size(); i++) {
+            QuizResultMessage.QuestionData data = message.getQuestions().get(i);
+
+            Question question = Question.builder()
+                    .gameRoom(room)
+                    .questionText(data.getQuestionText())
+                    .answers(data.getAnswers())
+                    .correctIndex(data.getCorrectIndex())
+                    .orderIndex(i + 1)
+                    .build();
+
+            questionEntities.add(question);
+        }
+
+        questionRepository.saveAll(questionEntities);
+
+        room.setStatus(GameStatus.READY);
+
+        log.info("Successfully processed AI results: {} questions added to room {}",
+                questionEntities.size(), room.getRoomCode());
+
+        return fetchFullRoom(room.getRoomCode());
     }
 
     @Transactional

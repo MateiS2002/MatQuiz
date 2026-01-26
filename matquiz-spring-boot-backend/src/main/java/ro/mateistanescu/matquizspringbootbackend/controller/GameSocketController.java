@@ -218,6 +218,7 @@ public class GameSocketController {
         }
     }
 
+    // THE UPDATED ROOM WITH STATUS READY IS SENT OUT TO WEBSOCKET IN QuizResultListener
 
     /**
      * 8. START GAME
