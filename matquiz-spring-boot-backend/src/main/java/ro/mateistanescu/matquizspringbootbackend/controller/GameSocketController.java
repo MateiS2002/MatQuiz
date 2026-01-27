@@ -209,7 +209,7 @@ public class GameSocketController {
                         roomDto
                         );
 
-                log.info("Quiz generated for room {}", request.getRoomCode());
+                log.info("Quiz generating for room {}", request.getRoomCode());
             } else{
             log.error("Quiz generation failed for room {}", request.getRoomCode());
             }

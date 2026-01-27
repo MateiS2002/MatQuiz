@@ -371,7 +371,7 @@ public class GameService {
         GameRoom room = gameRoomRepository.findByRoomCode(message.getRoomCode())
                 .orElseThrow(() -> new IllegalArgumentException("Room not found"));
 
-        if(room.getStatus() == GameStatus.GENERATING || room.getStatus() == GameStatus.READY) {
+        if(room.getStatus() != GameStatus.GENERATING) {
             throw new IllegalStateException("The quiz can only be updated when the room is in GENERATING state!");
         }
 

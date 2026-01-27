@@ -2,8 +2,10 @@ package ro.mateistanescu.matquizspringbootbackend.service;
 
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
+import org.springframework.amqp.rabbit.annotation.RabbitListener;
 import org.springframework.messaging.simp.SimpMessagingTemplate;
 import org.springframework.stereotype.Service;
+import ro.mateistanescu.matquizspringbootbackend.configuration.RabbitMqConfig;
 import ro.mateistanescu.matquizspringbootbackend.dtos.GameRoomDto;
 import ro.mateistanescu.matquizspringbootbackend.dtos.QuizResultMessage;
 import ro.mateistanescu.matquizspringbootbackend.entity.GameRoom;
@@ -18,6 +20,7 @@ public class QuizResultListener {
     private final GameMapper gameMapper;
     private final SimpMessagingTemplate messagingTemplate;
 
+    @RabbitListener(queues = RabbitMqConfig.QUIZ_RESULTS_QUEUE)
     public void receiveGeneratedQuiz(QuizResultMessage message){
         log.info("RABBITMQ: Received generated quiz for room: {}", message.getRoomCode());
 
