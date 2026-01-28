@@ -259,51 +259,7 @@ public class GameService {
         return answer;
     }
 
-    @Transactional
-    public CorrectAnswerDto submitCorrectAnswer(User user, CorrectAnswerRequest request) {
-        GameRoom room = gameRoomRepository.findByRoomCode(request.getRoomCode())
-                .orElseThrow(() -> new IllegalArgumentException("Room not found!"));
-
-        if (!room.getHost().getId().equals(user.getId())) {
-            throw new IllegalStateException("Only the host can request correct answers!");
-        }
-
-        Question question = questionRepository.findById(request.getQuestionId())
-                .orElseThrow(() -> new IllegalArgumentException("Question not found!"));
-
-        // Check if all players have answered
-        List<PlayerAnswer> existingAnswers = playerAnswerRepository.findByQuestionAndGameRoom(question, room);
-        List<GamePlayer> players = room.getPlayers();
-
-        // Identify players who haven't answered
-        List<GamePlayer> playersWithoutAnswers = players.stream()
-                .filter(player -> existingAnswers.stream()
-                        .noneMatch(answer -> answer.getGamePlayer().getId().equals(player.getId())))
-                .toList();
-
-        // Create 0-point answers for players who didn't answer
-        for (GamePlayer player : playersWithoutAnswers) {
-            PlayerAnswer missedAnswer = PlayerAnswer.builder()
-                    .gamePlayer(player)
-                    .question(question)
-                    .selectedIndex(null)
-                    .isCorrect(false)
-                    .pointsAwarded(0)
-                    .timeTakenMs(30000)
-                    .answeredAt(LocalDateTime.now())
-                    .build();
-
-            playerAnswerRepository.save(missedAnswer);
-
-            //send ws message to notify user of missed answer
-            failedAnswerService.sendFailedAnswerMessageToUser(player.getUser().getId());
-
-            log.info("Player {} did not answer question {} in room {}. Assigned 0 points.",
-                    player.getNickname(), question.getId(), room.getRoomCode());
-        }
-
-        return gameMapper.toCorrectAnswerDto(question);
-    }
+    
 
     @Transactional
     public ResultsDto fetchRoomResults(User user, ResultsRequest request) {
