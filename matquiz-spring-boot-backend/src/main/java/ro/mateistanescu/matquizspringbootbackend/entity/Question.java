@@ -60,6 +60,9 @@ public class Question {
     @Column(name = "posted_at")
     private LocalDateTime postedAt;
 
+    @Column(name = "revealed_at")
+    private LocalDateTime revealedAt;
+
     //TODO: Determine if this is necessary or a single query is enough in PlayerAnswerRepository
 //    @OneToMany(mappedBy = "question", fetch = FetchType.LAZY)
 //    @OrderBy("answeredAt ASC")

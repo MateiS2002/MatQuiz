@@ -1,0 +1,5 @@
+ALTER TABLE questions
+    ADD revealed_at TIMESTAMP WITHOUT TIME ZONE;
+
+ALTER TABLE questions
+    ALTER COLUMN time_limit SET NOT NULL;

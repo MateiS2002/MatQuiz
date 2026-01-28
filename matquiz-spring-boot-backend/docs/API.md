@@ -139,8 +139,10 @@ All game-related communication happens via **STOMP over WebSockets**.
     - Room status must be `PLAYING`.
     - Sends the current question based on `currentQuestionIndex`.
     - Increments the question index.
-    - When all questions are answered, sets status to `FINISHED` and broadcasts final `GameRoomDto`.
-    - Question's `postedAt` timestamp is recorded for anti-cheat validation.
+    - Records the question start time server-side.
+    - Schedules an automatic reveal after 30 seconds (+2s buffer).
+    - If all players answer early, reveal triggers immediately.
+    - When the final question is revealed, the game is finished and a final `GameRoomDto` is broadcast.
 
 ---
 
@@ -157,42 +159,20 @@ All game-related communication happens via **STOMP over WebSockets**.
     "submissionTime": "2026-01-17T14:30:00Z"
   }
   ```
-- **Private Response:** `/user/queue/answerResult` → `AnswerResultDto`
-- **Public Broadcast:** `/topic/room/{roomCode}` → `GameRoomDto` (updated scores)
+- **Private Response:** `/user/queue/submitAck` → `String` ("OK")
+- **Public Broadcast:** `/topic/room/{roomCode}/progress` → `AnswerProgressDto`
 - **Behavior:**
     - Room status must be `PLAYING`.
     - Player can only answer each question once.
     - Answer index must be valid (0-3).
-    - Points awarded: 100 for correct, 0 for incorrect.
+    - Points awarded: 50-100 for correct based on speed, 0 for incorrect.
     - Player score is updated immediately.
-    - Time taken is calculated from `question.postedAt` to `submissionTime`.
+    - Time taken is calculated server-side from `question.postedAt` to current server time.
+    - `submissionTime` is ignored by the server (kept for client-side logging).
 
 ---
 
-### 9. Request Correct Answer
-**Host requests to reveal the correct answer for the current question.**
-
-- **Destination:** `/app/correctAnswer`
-- **Payload:**
-  ```json
-  {
-    "roomCode": "ABC12",
-    "questionId": 123
-  }
-  ```
-- **Public Broadcast:** `/topic/room/{roomCode}` → `CorrectAnswerDto`
-- **Public Broadcast:** `/topic/room/{roomCode}` → `GameRoomDto` (updated scores)
-- **Behavior:**
-    - Only the host can request the correct answer.
-    - Identifies players who haven't answered the question.
-    - Automatically assigns 0 points to players who didn't answer.
-    - Sends a "FAILED ANSWER" message to each player who missed the question via `/user/queue/failed_answer`.
-    - Broadcasts the correct answer to all players.
-    - Broadcasts updated room state with final scores for the question.
-
----
-
-### 10. Request End Game Results
+### 9. Request End Game Results
 **Host requests the final results after the game is finished.**
 
 - **Destination:** `/app/endResults`
@@ -210,7 +190,7 @@ All game-related communication happens via **STOMP over WebSockets**.
 
 ---
 
-### 11. End Game Early
+### 10. End Game Early
 **Host terminates the game before all questions are answered.**
 
 - **Destination:** `/app/endGame`
@@ -230,7 +210,20 @@ All game-related communication happens via **STOMP over WebSockets**.
 
 ---
 
-### 12. Automatic Events (Server-Initiated)
+### 11. Automatic Events (Server-Initiated)
+
+#### Auto Reveal (Timed or All Answered)
+**When a question times out (30s + 2s buffer) or all players have answered.**
+
+- **Public Broadcast:** `/topic/room/{roomCode}/reveal` → `CorrectAnswerDto`
+- **Public Broadcast:** `/topic/room/{roomCode}` → `GameRoomDto` (updated scores)
+- **Behavior:**
+    - Identifies players who haven't answered the question.
+    - Automatically assigns 0 points to players who didn't answer.
+    - Sends a "FAILED ANSWER" message to each player who missed the question via `/user/queue/failed_answer`.
+    - Broadcasts the correct answer to all players.
+    - Broadcasts updated room state with final scores for the question.
+    - If this was the last question, the game is finished and a final `GameRoomDto` is broadcast.
 
 #### Disconnect Event
 **When a player's WebSocket connection closes.**
@@ -242,11 +235,11 @@ All game-related communication happens via **STOMP over WebSockets**.
     - Player data is retained (they can reconnect).
 
 #### Failed Answer Notification
-**When a player misses answering a question (host revealed correct answer).**
+**When a player misses answering a question (auto reveal).**
 
 - **Private Response:** `/user/queue/failed_answer` → `String` ("FAILED ANSWER")
 - **Behavior:**
-    - Sent to each player who didn't answer a question when the host reveals the correct answer.
+    - Sent to each player who didn't answer a question when the auto reveal happens.
     - Indicates that 0 points were automatically assigned for that question.
 
 #### Error Messages
@@ -426,15 +419,17 @@ All game-related communication happens via **STOMP over WebSockets**.
 ---
 
 ### `AnswerResultDto`
-**Sent to a player after they submit an answer.**
+**(Deprecated)** Not currently sent by the server.
+
+---
+
+### `AnswerProgressDto`
+**Broadcast when a player submits an answer.**
 
 ```json
 {
-  "questionId": 42,
-  "isCorrect": true,
-  "correctAnswerIndex": 1,
-  "pointsEarned": 100,
-  "newTotalScore": 250
+  "nickname": "matei",
+  "answered": true
 }
 ```
 
@@ -585,16 +580,6 @@ All game-related communication happens via **STOMP over WebSockets**.
 
 ---
 
-### `CorrectAnswerRequest`
-```json
-{
-  "roomCode": "ABC12",
-  "questionId": 123
-}
-```
-
----
-
 ### `ResultsRequest`
 ```json
 {
@@ -634,10 +619,10 @@ All game-related communication happens via **STOMP over WebSockets**.
 3. **Matei** generates quiz → Status changes to `GENERATING`, then `READY`
 4. **Matei** starts game → Status changes to `PLAYING`
 5. **Matei** requests question → All players receive `QuestionDto`
-6. **John** submits answer → Receives `AnswerResultDto`, all players see updated scores
-7. **Matei** requests correct answer → All players receive `CorrectAnswerDto`, players who missed get "FAILED ANSWER" notification
+6. **John** submits answer → Receives `submitAck`, all players see `AnswerProgressDto`
+7. Auto reveal triggers → All players receive `CorrectAnswerDto`, players who missed get "FAILED ANSWER"
 8. Repeat step 5-7 for all questions
-9. After last question → Status changes to `FINISHED`, final `GameRoomDto` with leaderboard
+9. After last reveal → Status changes to `FINISHED`, final `GameRoomDto` with leaderboard
 10. **Matei** requests end results → All players receive `ResultsDto` with final leaderboard
 
 ### Early Termination Flow
@@ -646,7 +631,7 @@ All game-related communication happens via **STOMP over WebSockets**.
 3. **Matei** generates quiz → Status changes to `GENERATING`, then `READY`
 4. **Matei** starts game → Status changes to `PLAYING`
 5. **Matei** requests question → All players receive `QuestionDto`
-6. **John** submits answer → Receives `AnswerResultDto`, all players see updated scores
+6. **John** submits answer → Receives `submitAck`, all players see `AnswerProgressDto`
 7. **Matei** ends game early → All players receive "END_GAME_EARLY" message, room is deleted
 
 ### Reconnection Flow
@@ -697,22 +682,24 @@ All errors are sent to `/user/queue/errors` as plain `String` messages.
 - Subscribe to `/user/queue/joined` to receive confirmation when joining a room.
 - Subscribe to `/user/queue/reconnected` to receive confirmation when reconnecting.
 - Subscribe to `/user/queue/left` to receive confirmation when leaving a room.
-- Subscribe to `/user/queue/answerResult` to receive answer results after submitting.
+- Subscribe to `/user/queue/submitAck` to receive confirmation after submitting.
 - Subscribe to `/user/queue/failed_answer` to receive notifications when missing a question.
 - Subscribe to `/user/queue/errors` to receive error messages.
+- Subscribe to `/topic/room/{roomCode}/progress` to show who has answered.
+- Subscribe to `/topic/room/{roomCode}/reveal` to show the correct answer.
 
 ### Game Flow
-- The `QuestionDto` does **not** include the correct answer—it's only revealed in `AnswerResultDto` after submission or in `CorrectAnswerDto` when the host requests it.
+- The `QuestionDto` does **not** include the correct answer—it's only revealed in `CorrectAnswerDto` during auto reveal.
 - Player `isConnected` status updates in real-time when users disconnect.
-- Use `submissionTime` from the client to allow server-side anti-cheat validation (time-based scoring in the future).
-- After the host requests the correct answer, players who missed the question will receive a "FAILED ANSWER" notification and 0 points are automatically assigned.
-- The game automatically finishes after all questions have been answered (32-second timeout after the last question is posted).
+- `submissionTime` is currently ignored by the server.
+- After auto reveal, players who missed the question will receive a "FAILED ANSWER" notification and 0 points are automatically assigned.
+- The game automatically finishes after the final reveal (or after the 35-second last-question timeout).
 - The host can end the game early at any time using `/app/endGame`, which will delete the room.
 
 ### Question Timing
-- Questions have a 30-second time limit.
-- Time taken is calculated from `question.postedAt` to `submissionTime`.
-- If a player doesn't answer within the time limit, they receive 0 points when the host reveals the correct answer.
+- Questions have a 30-second time limit (auto reveal at ~32s).
+- Time taken is calculated server-side from `question.postedAt`.
+- If a player doesn't answer within the time limit, they receive 0 points when the auto reveal happens.
 
 ### Leaderboard
 - Use `GET /api/auth/leaderboard` to retrieve the full global leaderboard.
@@ -744,5 +731,14 @@ All errors are sent to `/user/queue/errors` as plain `String` messages.
 
 ---
 
-**Last Updated:** 2026-01-20
+## TODO (Planned)
+
+### User & Profile
+- Add endpoint to update user profile (username, avatar, bio).
+- Add endpoint to fetch user stats (games played, win rate, average score, streaks).
+- Add endpoint for match history / recent games.
+
+---
+
+**Last Updated:** 2026-01-28
 ```

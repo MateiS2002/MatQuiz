@@ -11,7 +11,6 @@ import ro.mateistanescu.matquizspringbootbackend.entity.GameRoom;
 import ro.mateistanescu.matquizspringbootbackend.entity.User;
 import ro.mateistanescu.matquizspringbootbackend.enums.GameStatus;
 import ro.mateistanescu.matquizspringbootbackend.mapper.GameMapper;
-import ro.mateistanescu.matquizspringbootbackend.repository.GamePlayerRepository;
 import ro.mateistanescu.matquizspringbootbackend.repository.GameRoomRepository;
 import ro.mateistanescu.matquizspringbootbackend.repository.UserRepository;
 
@@ -30,48 +29,43 @@ public class FinishGameService {
      */
     @Transactional
     public void finishGame(String roomCode) {
-        try {
-            GameRoom room = gameRoomRepository.findWithDetailsByRoomCode(roomCode)
-                    .orElse(null);
+        GameRoom room = gameRoomRepository.findWithDetailsByRoomCode(roomCode)
+                .orElse(null);
 
-            if (room == null) {
-                log.warn("Room {} not found when trying to finish game", roomCode);
-                return;
-            }
-
-            // Only finish if still playing (in case game was already finished)
-            if (room.getStatus() != GameStatus.PLAYING) {
-                log.info("Room {} is not in PLAYING state, skipping finish", roomCode);
-                return;
-            }
-
-            log.info("Finishing game for room {}", roomCode);
-
-            // Set game status to finished
-            room.setStatus(GameStatus.FINISHED);
-            gameRoomRepository.save(room);
-
-            // Update user statistics for all players
-            for (GamePlayer player : room.getPlayers()) {
-                User user = player.getUser();
-                user.setTotalGamesPlayed(user.getTotalGamesPlayed() + 1);
-                user.setLastGamePoints(player.getScore());
-                userRepository.save(user);
-                log.info("Updated stats for user {}: totalGames={}, lastGamePoints={}",
-                        user.getUsername(), user.getTotalGamesPlayed(), user.getLastGamePoints());
-            }
-
-            // Broadcast final room state to all players
-            GameRoomDto roomDto = gameMapper.toDto(room);
-            messagingTemplate.convertAndSend(
-                    "/topic/room/" + roomCode,
-                    roomDto
-            );
-
-            log.info("Game finished for room {}. Final results broadcasted.", roomCode);
-
-        } catch (Exception e) {
-            log.error("Error finishing game for room {}: {}", roomCode, e.getMessage(), e);
+        if (room == null) {
+            log.warn("Room {} not found when trying to finish game", roomCode);
+            return;
         }
+
+        // Only finish if still playing (in case a game was already finished)
+        if (room.getStatus() != GameStatus.PLAYING) {
+            log.info("Room {} is not in PLAYING state, skipping finish", roomCode);
+            return;
+        }
+
+        log.info("Finishing game for room {}", roomCode);
+
+        // Set game status to finished
+        room.setStatus(GameStatus.FINISHED);
+        gameRoomRepository.save(room);
+
+        // Update user statistics for all players
+        for (GamePlayer player : room.getPlayers()) {
+            User user = player.getUser();
+            user.setTotalGamesPlayed(user.getTotalGamesPlayed() + 1);
+            user.setLastGamePoints(player.getScore());
+            userRepository.save(user);
+            log.info("Updated stats for user {}: totalGames={}, lastGamePoints={}",
+                    user.getUsername(), user.getTotalGamesPlayed(), user.getLastGamePoints());
+        }
+
+        // Broadcast final room state to all players
+        GameRoomDto roomDto = gameMapper.toDto(room);
+        messagingTemplate.convertAndSend(
+                "/topic/room/" + roomCode,
+                roomDto
+        );
+
+        log.info("Game finished for room {}. Final results broadcasted.", roomCode);
     }
 }

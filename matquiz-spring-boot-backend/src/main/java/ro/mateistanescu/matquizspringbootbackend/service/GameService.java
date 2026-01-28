@@ -279,6 +279,7 @@ public class GameService {
     @Transactional
     public void processReveal(String roomCode, Long questionId) {
         GameRoom room = fetchFullRoom(roomCode);
+        LocalDateTime now = LocalDateTime.now();
 
         Question question = questionRepository.findById(questionId)
                 .orElseThrow(() -> new IllegalArgumentException("Question not found"));
@@ -287,12 +288,16 @@ public class GameService {
             return;
         }
 
-        // IDEMPOTENCY CHECK: If the room has already progressed or results are sent, skip.
-        // We can check if all players already have an answer record for this question.
-        List<PlayerAnswer> existingAnswers = playerAnswerRepository.findByQuestionAndGameRoom(question, room);
-        if (existingAnswers.size() >= room.getPlayers().size()) {
+        // IDEMPOTENCY CHECK: If the room has already been revealed.
+        if (question.getRevealedAt() != null) {
             return;
         }
+
+        question.setRevealedAt(now);
+        questionRepository.save(question);
+
+        List<PlayerAnswer> existingAnswers =
+                playerAnswerRepository.findByQuestionAndGameRoom(question, room);
 
         // 1. Process "Missed" players (Assign 0 points)
         List<GamePlayer> playersWithoutAnswers = room.getPlayers().stream()
