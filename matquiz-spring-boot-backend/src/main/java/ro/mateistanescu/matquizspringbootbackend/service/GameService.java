@@ -548,7 +548,7 @@ public class GameService {
 
     //TODO: This is just for testing purposes. Change the method to generate room number.
     private String generateRoomCode() {
-        return RandomStringUtils.randomAlphanumeric(5).toUpperCase();
+        return RandomStringUtils.secureStrong().nextAlphanumeric(5).toUpperCase();
     }
 
 
