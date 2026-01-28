@@ -5,12 +5,16 @@ import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.boot.context.event.ApplicationReadyEvent;
 import org.springframework.context.event.EventListener;
+import org.springframework.messaging.simp.SimpMessagingTemplate;
 import org.springframework.scheduling.annotation.Scheduled;
 import org.springframework.stereotype.Component;
+import ro.mateistanescu.matquizspringbootbackend.dtos.GamePulseDto;
 import ro.mateistanescu.matquizspringbootbackend.enums.GameStatus;
 import ro.mateistanescu.matquizspringbootbackend.repository.GameRoomRepository;
 
+import java.time.Duration;
 import java.time.LocalDateTime;
+import java.util.List;
 
 
 @Component
@@ -19,6 +23,7 @@ import java.time.LocalDateTime;
 public class ScheduledTasks {
 
     private final GameRoomRepository gameRoomRepository;
+    private final SimpMessagingTemplate messagingTemplate;
 
 
     /**
@@ -54,5 +59,42 @@ public class ScheduledTasks {
         } catch (Exception e) {
             log.error("Failed to delete expired rooms: {}", e.getMessage());
         }
+    }
+
+    /**
+     * Sends a lightweight heartbeat every 2 seconds to keep UI timers synced.
+     */
+    @Scheduled(fixedRate = 2000)
+    public void broadcastGamePulses() {
+        long startTime = System.currentTimeMillis();
+
+        List<GameRoomRepository.GamePulseProjection> activeGames = gameRoomRepository.findAllActiveGames();
+
+        if (activeGames.isEmpty()) return;
+
+        for (GameRoomRepository.GamePulseProjection pulse : activeGames) {
+            long remaining = 0;
+
+            if (pulse.getQuestionStartedAt() != null) {
+                // Calculate time left vs the 30-second limit
+                long elapsed = Duration.between(pulse.getQuestionStartedAt(), LocalDateTime.now()).toMillis();
+                remaining = Math.max(0, 30000 - elapsed);
+            }
+
+            GamePulseDto pulseDto = new GamePulseDto(
+                    pulse.getRoomCode(),
+                    pulse.getStatus().name(),
+                    pulse.getCurrentQuestionIndex(),
+                    remaining,
+                    System.currentTimeMillis() // Absolute server time for client clock correction
+            );
+
+            // Broadcast to the specific room's pulse channel
+            messagingTemplate.convertAndSend("/topic/room/" + pulse.getRoomCode() + "/pulse", pulseDto);
+        }
+
+        long endTime = System.currentTimeMillis();
+
+//        log.info("Pulse broadcasted in {} ms", endTime - startTime); -- measured at 6-7 ms
     }
 }

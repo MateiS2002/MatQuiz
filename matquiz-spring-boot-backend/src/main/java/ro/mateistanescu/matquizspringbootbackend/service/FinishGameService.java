@@ -29,9 +29,9 @@ public class FinishGameService {
      * Called automatically after the last question timeout.
      */
     @Transactional
-    public void finishGameAfterTimeout(String roomCode) {
+    public void finishGame(String roomCode) {
         try {
-            GameRoom room = gameRoomRepository.findByRoomCode(roomCode)
+            GameRoom room = gameRoomRepository.findWithDetailsByRoomCode(roomCode)
                     .orElse(null);
 
             if (room == null) {
@@ -39,7 +39,7 @@ public class FinishGameService {
                 return;
             }
 
-            // Only finish if still playing (in case game was already finished manually)
+            // Only finish if still playing (in case game was already finished)
             if (room.getStatus() != GameStatus.PLAYING) {
                 log.info("Room {} is not in PLAYING state, skipping finish", roomCode);
                 return;

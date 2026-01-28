@@ -18,4 +18,6 @@ public interface PlayerAnswerRepository extends JpaRepository<PlayerAnswer, Long
 
     @Query("SELECT pa FROM PlayerAnswer pa JOIN pa.gamePlayer gp WHERE pa.question = :question AND gp.gameRoom = :room")
     List<PlayerAnswer> findByQuestionAndGameRoom(@Param("question") Question question, @Param("room") GameRoom room);
+
+    long countByQuestion(Question question);
 }

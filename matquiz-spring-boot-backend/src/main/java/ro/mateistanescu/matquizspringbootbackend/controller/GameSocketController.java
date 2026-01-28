@@ -288,33 +288,23 @@ public class GameSocketController {
     public void submitAnswer(@Payload AnswerSubmissionRequest request, Principal principal) {
         if(principal == null) return;
         User user = getUser(principal);
-        LocalDateTime clientSentRequestAt = LocalDateTime.now();
+        LocalDateTime now = LocalDateTime.now();
 
         try {
-            PlayerAnswer answer = gameService.submitAnswer(user, request, clientSentRequestAt);
+            gameService.submitAnswer(user, request, now);
 
-            // Send a result only to the player who answered
-            AnswerResultDto result = AnswerResultDto.builder()
-                    .questionId(answer.getQuestion().getId())
-                    .isCorrect(answer.getIsCorrect())
-                    .correctAnswerIndex(answer.getQuestion().getCorrectIndex())
-                    .pointsEarned(answer.getPointsAwarded())
-                    .newTotalScore(answer.getGamePlayer().getScore())
-                    .build();
-
+            // Notify only the sender that their submission was successful and do not reveal the correct answer yet
             messagingTemplate.convertAndSendToUser(
                     user.getUsername(),
-                    "/queue/answerResult",
-                    result
+                    "/queue/submitAck", // New endpoint for simple "Success"
+                    "OK"
             );
 
-            // Broadcast updated room state to all players (so they see updated scores)
-            GameRoom room = gameService.fetchFullRoom(request.getRoomCode().trim().toUpperCase());
-            GameRoomDto roomDto = gameMapper.toDto(room);
-
+            // BROADCAST PROGRESS: Everyone sees that this user is "Done"
+            AnswerProgressDto progress = new AnswerProgressDto(user.getUsername(), true);
             messagingTemplate.convertAndSend(
-                    "/topic/room/" + request.getRoomCode().trim().toUpperCase(),
-                    roomDto
+                    "/topic/room/" + request.getRoomCode().trim().toUpperCase() + "/progress",
+                    progress
             );
 
             log.info("Answer processed for player {} in room {}", user.getUsername(), request.getRoomCode());
@@ -325,42 +315,9 @@ public class GameSocketController {
         }
     }
 
-    /**
-     * 9.REQUEST CORRECT ANSWER
-     */
-    @MessageMapping("/correctAnswer")
-    public void correctAnswer(@Payload CorrectAnswerRequest request, Principal principal) {
-        if(principal == null) return;
-        User user = getUser(principal);
-
-        try {
-            CorrectAnswerDto correctAnswerDto = gameService.submitCorrectAnswer(user, request);
-
-            // Broadcast the correct answer to all players in the room
-            messagingTemplate.convertAndSend(
-                    "/topic/room/" + request.getRoomCode().trim().toUpperCase(),
-                    correctAnswerDto
-            );
-
-            // Also broadcast updated room state to show final scores for this question
-            GameRoom room = gameService.fetchFullRoom(request.getRoomCode().trim().toUpperCase());
-            GameRoomDto roomDto = gameMapper.toDto(room);
-
-            messagingTemplate.convertAndSend(
-                    "/topic/room/" + request.getRoomCode().trim().toUpperCase(),
-                    roomDto
-            );
-
-            log.info("Correct answer broadcasted for room {} for question id: {}", request.getRoomCode(), request.getQuestionId());
-
-        } catch (Exception e) {
-            log.error("Correct answer request failed: {}", e.getMessage());
-            sendError(user.getUsername(), "Failed to reveal correct answer: " + e.getMessage());
-        }
-    }
 
     /**
-     * 10. REQUEST END GAME RESULTS
+     * 9. REQUEST END GAME RESULTS
      */
     @MessageMapping("/endResults")
     public void endResults(@Payload ResultsRequest request, Principal principal) {
@@ -371,7 +328,7 @@ public class GameSocketController {
             ResultsDto resultsDto = gameService.fetchRoomResults(user, request);
 
             messagingTemplate.convertAndSend(
-                    "topic/room" + request.getRoomCode().trim().toUpperCase(),
+                    "topic/room/" + request.getRoomCode().trim().toUpperCase(),
                     resultsDto
             );
 

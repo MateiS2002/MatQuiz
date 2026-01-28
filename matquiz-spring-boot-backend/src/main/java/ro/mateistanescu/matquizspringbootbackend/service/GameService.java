@@ -3,6 +3,7 @@ package ro.mateistanescu.matquizspringbootbackend.service;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
 import org.apache.commons.lang3.RandomStringUtils;
+import org.springframework.messaging.simp.SimpMessagingTemplate;
 import org.springframework.scheduling.TaskScheduler;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
@@ -37,9 +38,10 @@ public class GameService {
     private final TaskScheduler taskScheduler;
     private final FinishGameService finishGameService;
     private final FailedAnswerService failedAnswerService;
+    private final SimpMessagingTemplate messagingTemplate;
 
     private static final int MAX_PLAYERS = 5;
-    private static final long GAME_FINISH_TIMEOUT_MS = 32000; // 32 seconds: 30s question time + 2s buffer
+    private static final long GAME_FINISH_TIMEOUT_MS = 35000; // 35 seconds: 30s question time + 5s buffer
 
 
     /**
@@ -159,20 +161,30 @@ public class GameService {
         Question question = room.getQuestions().get(currentIndex);
 
         int nextIndex = currentIndex + 1;
-
-        // Check if this is the last question
         boolean isLastQuestion = nextIndex >= room.getQuestions().size();
 
         room.setCurrentQuestionIndex(nextIndex);
 
-        question.setPostedAt(LocalDateTime.now());
+        // Set the start time for server-side timing
+        LocalDateTime now = LocalDateTime.now();
+        question.setPostedAt(now);
+        room.setQuestionStartedAt(now);
+
         questionRepository.save(question);
         gameRoomRepository.save(room);
 
-        log.info("Fetched question {} of {} for room {}",
-                currentIndex + 1, room.getQuestions().size(), roomCode);
+        log.info("Fetched question {} of {} for room {}", nextIndex, room.getQuestions().size(), roomCode);
 
-        // If this is the last question, schedule the game to finish after timeout
+        // TRIGGER: Schedule automatic reveal after 30 seconds + buffer
+        Long questionId = question.getId();
+        taskScheduler.schedule(() -> {
+            try {
+                processReveal(roomCode, questionId);
+            } catch (Exception e) {
+                log.error("Timed reveal failed for room {} question {}", roomCode, questionId, e);
+            }
+        }, Instant.now().plusMillis(32000));
+
         if (isLastQuestion) {
             scheduleGameFinish(roomCode);
         }
@@ -181,7 +193,7 @@ public class GameService {
     }
 
     @Transactional
-    public PlayerAnswer submitAnswer(User user, AnswerSubmissionRequest request, LocalDateTime clientSentRequestAt) {
+    public void submitAnswer(User user, AnswerSubmissionRequest request, LocalDateTime now) {
         String roomCode = request.getRoomCode().trim().toUpperCase();
 
         // Find the room
@@ -218,23 +230,21 @@ public class GameService {
             throw new IllegalStateException("You have already answered this question!");
         }
 
-        // Check if the answer is correct
+        //Server side timing for security
+        int timeTakenMs = 30000; //Default is max
+        if (question.getPostedAt() != null) {
+            timeTakenMs = (int) Duration.between(question.getPostedAt(), now).toMillis();
+        }
+
+        timeTakenMs = Math.clamp(timeTakenMs, 0, 30000);
+
         boolean isCorrect = request.getSelectedAnswerIndex().equals(question.getCorrectIndex());
-        LocalDateTime questionPostedAt = question.getPostedAt();
-        int timeTakenMs = 30000;
-
-        if(questionPostedAt != null) {
-            timeTakenMs = (int) Duration.between(clientSentRequestAt, questionPostedAt).abs().toMillis();
-            log.info("User {} answered in {} ms", user.getUsername(), timeTakenMs);
+        int pointsEarned = 0; //Default is min
+        if (isCorrect) {
+            //For example, a 20-sec answer has a factor of 0.33. A 3-sec answer has a factor of 0.9
+            double speedFactor = (30000.0 - timeTakenMs) / 30000.0;
+            pointsEarned = (int) (50 + (50 * speedFactor)); // Max 100, Min 50 for a correct answer
         }
-
-        if (timeTakenMs > 30000 || timeTakenMs < 0) {
-            timeTakenMs = 30000;
-        }
-
-        // Calculate points
-        //TODO : Finish the logic for time based awards
-        int pointsEarned = isCorrect ? 100 : 0;
 
         // Create an answer record
         PlayerAnswer answer = PlayerAnswer.builder()
@@ -244,7 +254,7 @@ public class GameService {
                 .isCorrect(isCorrect)
                 .pointsAwarded(pointsEarned)
                 .timeTakenMs(timeTakenMs)
-                .answeredAt(clientSentRequestAt)
+                .answeredAt(now)
                 .build();
 
         playerAnswerRepository.save(answer);
@@ -256,10 +266,71 @@ public class GameService {
         log.info("Player {} answered question {} in room {}. Correct: {}, Points: {}",
                 user.getUsername(), question.getId(), roomCode, isCorrect, pointsEarned);
 
-        return answer;
+        // Check if this was the last answer needed
+        long totalPlayers = room.getPlayers().size();
+        long currentAnswers = playerAnswerRepository.countByQuestion(question);
+
+        if (currentAnswers >= totalPlayers) {
+            log.info("All players answered. Triggering immediate reveal for room {}", roomCode);
+            processReveal(roomCode, question.getId());
+        }
     }
 
-    
+    @Transactional
+    public void processReveal(String roomCode, Long questionId) {
+        GameRoom room = fetchFullRoom(roomCode);
+
+        Question question = questionRepository.findById(questionId)
+                .orElseThrow(() -> new IllegalArgumentException("Question not found"));
+
+        if (room.getStatus() != GameStatus.PLAYING) {
+            return;
+        }
+
+        // IDEMPOTENCY CHECK: If the room has already progressed or results are sent, skip.
+        // We can check if all players already have an answer record for this question.
+        List<PlayerAnswer> existingAnswers = playerAnswerRepository.findByQuestionAndGameRoom(question, room);
+        if (existingAnswers.size() >= room.getPlayers().size()) {
+            return;
+        }
+
+        // 1. Process "Missed" players (Assign 0 points)
+        List<GamePlayer> playersWithoutAnswers = room.getPlayers().stream()
+                .filter(player -> existingAnswers.stream()
+                        .noneMatch(ans -> ans.getGamePlayer().getId().equals(player.getId())))
+                .toList();
+
+        for (GamePlayer player : playersWithoutAnswers) {
+            PlayerAnswer missedAnswer = PlayerAnswer.builder()
+                    .gamePlayer(player)
+                    .question(question)
+                    .isCorrect(false)
+                    .pointsAwarded(0)
+                    .timeTakenMs(30000)
+                    .answeredAt(LocalDateTime.now())
+                    .build();
+            playerAnswerRepository.save(missedAnswer);
+
+            // Notify the specific player they missed it
+            failedAnswerService.sendFailedAnswerMessageToUser(player.getUser().getId());
+        }
+
+        // 2. BROADCAST REVEAL: Send the correct answer data
+        CorrectAnswerDto revealDto = gameMapper.toCorrectAnswerDto(question);
+        messagingTemplate.convertAndSend("/topic/room/" + roomCode + "/reveal", revealDto);
+
+        // 3. BROADCAST UPDATE: Send the full RoomDto for final score synchronization
+        GameRoomDto roomDto = gameMapper.toDto(fetchFullRoom(roomCode));
+        messagingTemplate.convertAndSend("/topic/room/" + roomCode, roomDto);
+
+        log.info("Auto-Reveal executed for room {}", roomCode);
+
+        int totalQuestions = room.getQuestionCount();
+        if (room.getCurrentQuestionIndex() >= totalQuestions) {
+            log.info("Final question revealed. Ending game immediately for room {}", roomCode);
+            finishGameService.finishGame(roomCode);
+        }
+    }
 
     @Transactional
     public ResultsDto fetchRoomResults(User user, ResultsRequest request) {
@@ -546,11 +617,9 @@ public class GameService {
         room.addPlayer(player);
     }
 
-    //TODO: This is just for testing purposes. Change the method to generate room number.
     private String generateRoomCode() {
         return RandomStringUtils.secureStrong().nextAlphanumeric(5).toUpperCase();
     }
-
 
     public GameRoom fetchFullRoom(String roomCode) {
         return gameRoomRepository.findWithDetailsByRoomCode(roomCode)
@@ -558,7 +627,7 @@ public class GameService {
     }
 
     /**
-     * Schedules the game to finish after a timeout (32 seconds).
+     * Schedules the game to finish after a timeout (35 seconds).
      * This is called when the last question is fetched to allow players
      * time to answer with a network delay buffer.
      */
@@ -566,6 +635,6 @@ public class GameService {
         log.info("Scheduling game finish for room {} in {} ms", originalRoomCode, GAME_FINISH_TIMEOUT_MS);
 
         Instant scheduledTime = Instant.now().plusMillis(GAME_FINISH_TIMEOUT_MS);
-        taskScheduler.schedule(() -> finishGameService.finishGameAfterTimeout(originalRoomCode), scheduledTime);
+        taskScheduler.schedule(() -> finishGameService.finishGame(originalRoomCode), scheduledTime);
     }
 }

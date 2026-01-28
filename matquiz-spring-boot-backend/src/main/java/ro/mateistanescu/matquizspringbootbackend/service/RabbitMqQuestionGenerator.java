@@ -27,6 +27,8 @@ public class RabbitMqQuestionGenerator implements QuestionGeneratorService {
     @Override
     @Transactional
     public void generateQuestions(GameRoom room) {
+
+        //TODO: change the quiz identification to be by correlation_id
         //This service sends a message in the rabbitmq quiz generation queue as JSON Payload with
         //------roomCode, topic, difficulty
         //Updates the status of the room to GENERATING

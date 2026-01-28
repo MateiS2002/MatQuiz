@@ -9,6 +9,7 @@ import ro.mateistanescu.matquizspringbootbackend.entity.GameRoom;
 import ro.mateistanescu.matquizspringbootbackend.enums.GameStatus;
 
 import java.time.LocalDateTime;
+import java.util.List;
 import java.util.Optional;
 
 @Repository
@@ -21,4 +22,17 @@ public interface GameRoomRepository extends JpaRepository<GameRoom, Long> {
     @Modifying
     @Query("DELETE FROM GameRoom gr WHERE gr.status = :status AND gr.createdAt < :expirationTime")
     void deleteByStatusAndCreatedAtBefore(GameStatus status, LocalDateTime expirationTime);
+
+    // Spring data JPA projection. Read-only
+    @Query("SELECT r.roomCode as roomCode, r.status as status, " +
+            "r.currentQuestionIndex as currentQuestionIndex, r.questionStartedAt as questionStartedAt " +
+            "FROM GameRoom r WHERE r.status = 3")
+    List<GamePulseProjection> findAllActiveGames();
+
+    interface GamePulseProjection {
+        String getRoomCode();
+        GameStatus getStatus();
+        Integer getCurrentQuestionIndex();
+        LocalDateTime getQuestionStartedAt();
+    }
 }

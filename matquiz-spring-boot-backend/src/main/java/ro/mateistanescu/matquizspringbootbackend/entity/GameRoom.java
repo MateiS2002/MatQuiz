@@ -53,6 +53,9 @@ public class GameRoom {
     @Column(name = "current_question_index", nullable = false)
     private Integer currentQuestionIndex = 0;
 
+    @Column(name = "question_started_at")
+    private LocalDateTime questionStartedAt;
+
     @Column(name = "created_at", nullable = false)
     private LocalDateTime createdAt;
 
