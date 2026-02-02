@@ -39,9 +39,11 @@ public class GameService {
     private final FinishGameService finishGameService;
     private final FailedAnswerService failedAnswerService;
     private final SimpMessagingTemplate messagingTemplate;
+    private final QuizTimeoutService quizTimeoutService;
 
     private static final int MAX_PLAYERS = 5;
     private static final long GAME_FINISH_TIMEOUT_MS = 35000; // 35 seconds: 30s question time + 5s buffer
+    private static final long QUIZ_GENERATION_TIMEOUT = 20000; // 20 seconds
 
 
     /**
@@ -55,7 +57,6 @@ public class GameService {
 
         String roomCode = generateRoomCode();
 
-        //TODO: This is a safety check because the room code generation algorithm must be changed
         if(roomCode.equals(gameRoomRepository.findByRoomCode(roomCode).map(GameRoom::getRoomCode).orElse(null))){
             throw new IllegalStateException("Room code already exists!");
         }
@@ -385,9 +386,12 @@ public class GameService {
             throw new IllegalArgumentException("Only EASY and ADVANCED difficulties are supported!");
         }
 
-        if (room.getStatus() != GameStatus.WAITING) {
-            throw new IllegalStateException("The quiz can be only generated when the room is waiting! Another quiz might have been generated already.");
+        if (room.getStatus() != GameStatus.WAITING && room.getStatus() != GameStatus.GENERATING) {
+            throw new IllegalStateException("The quiz can be only generated when the room is waiting or generating!");
         }
+
+        //TODO: Implement quiz generation timeout
+        scheduleQuizGenerationCheck(request.getRoomCode());
 
         room.setTopic(request.getTopic());
         room.setDifficulty(request.getDifficulty());
@@ -509,6 +513,10 @@ public class GameService {
         GamePlayer playerToRemove = gamePlayerRepository.findByUserAndGameRoom(user, room)
                 .orElseThrow(() -> new IllegalStateException("Player is not in this room!"));
 
+        if (room.getStatus() == GameStatus.FINISHED) {
+            return null;
+        }
+
         // Check if this player is the host
         boolean isHost = room.getHost().getId().equals(user.getId());
 
@@ -629,6 +637,13 @@ public class GameService {
     public GameRoom fetchFullRoom(String roomCode) {
         return gameRoomRepository.findWithDetailsByRoomCode(roomCode)
                 .orElseThrow(() -> new IllegalStateException("Room not found during fetch"));
+    }
+
+
+    private void scheduleQuizGenerationCheck(String roomCode) {
+        Instant scheduledTime = Instant.now().plusMillis(QUIZ_GENERATION_TIMEOUT);
+        taskScheduler.schedule(() -> quizTimeoutService.quizTimeoutCheck(roomCode), scheduledTime);
+        log.info("Scheduled quiz generation check for room {}", roomCode);
     }
 
     /**

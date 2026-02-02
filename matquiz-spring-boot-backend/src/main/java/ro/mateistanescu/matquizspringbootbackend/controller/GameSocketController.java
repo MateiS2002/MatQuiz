@@ -11,7 +11,6 @@ import org.springframework.stereotype.Controller;
 import ro.mateistanescu.matquizspringbootbackend.dtos.*;
 import ro.mateistanescu.matquizspringbootbackend.dtos.socket.*;
 import ro.mateistanescu.matquizspringbootbackend.entity.GameRoom;
-import ro.mateistanescu.matquizspringbootbackend.entity.PlayerAnswer;
 import ro.mateistanescu.matquizspringbootbackend.entity.User;
 import ro.mateistanescu.matquizspringbootbackend.enums.GameStatus;
 import ro.mateistanescu.matquizspringbootbackend.mapper.GameMapper;
@@ -218,7 +217,7 @@ public class GameSocketController {
         }
     }
 
-    // THE UPDATED ROOM WITH STATUS READY IS SENT OUT TO WEBSOCKET IN QuizResultListener
+    // THE UPDATED ROOM WITH STATUS READY IS SENT OUT WITH WEBSOCKET IN QuizResultListener
 
     /**
      * 8. START GAME
@@ -328,7 +327,7 @@ public class GameSocketController {
             ResultsDto resultsDto = gameService.fetchRoomResults(user, request);
 
             messagingTemplate.convertAndSend(
-                    "topic/room/" + request.getRoomCode().trim().toUpperCase(),
+                    "/topic/room/" + request.getRoomCode().trim().toUpperCase(),
                     resultsDto
             );
 

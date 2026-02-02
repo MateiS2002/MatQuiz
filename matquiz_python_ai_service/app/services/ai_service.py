@@ -12,15 +12,15 @@ class AiService:
         self.model_id = "gemini-2.5-flash"
 
     def generate_quiz(self, topic: str, difficulty: str, room_code: str) -> str:
+        topic = topic.lower().strip()
+
         prompt = (
-            f"Generate a quiz with 5 questions about {topic}. "
+            f"You are a master entertainer at a game show. Generate a quiz with 5 questions about {topic}. "
             f"The difficulty should be {difficulty}. "
-            "Ensure the questions are challenging but fair and also they should feel fun for an online quiz game not academic."
+            "Ensure the questions are challenging but fair and also they should feel fun for an online quiz game, not academic."
         )
 
-
-
-        logger.info(f"Calling Gemini API for room {room_code} with topic {topic}and difficulty {difficulty}")
+        logger.info(f"Calling Gemini API for room {room_code} with topic {topic} and difficulty {difficulty}")
 
         response = self.client.models.generate_content(
             model = self.model_id,
