@@ -27,6 +27,10 @@ Example:
 - Frontend: `https://matquiz.example.com`
 - Backend: `https://api-matquiz.example.com`
 
+Note:
+- In this compose setup, `frontend` and `backend` ports are bound to `127.0.0.1` on the host.
+- They stay private from the public internet and are meant to be reached through Coolify's reverse proxy/domains.
+
 ## 3. Configure Environment Variables
 
 Use `.env.prod.example` as reference and set these in Coolify:
