@@ -1,6 +1,6 @@
 # MatQuiz Deployment Guide (Coolify)
 
-This project is prepared for Coolify auto-deploy from Git using `docker-compose.prod.yml`.
+This project is prepared for Coolify auto-deploy from Git using `docker-compose.prod.yaml`.
 
 The stack includes:
 - `frontend` (React static app on port `3000`)
@@ -14,7 +14,7 @@ The stack includes:
 1. In Coolify, click `New Resource` -> `Application`.
 2. Connect/select your Git repository.
 3. Choose `Docker Compose` build pack.
-4. Set compose file path to `docker-compose.prod.yml`.
+4. Set compose file path to `docker-compose.prod.yaml`.
 5. Enable `Auto Deploy` on push.
 
 ## 2. Configure Domains in Coolify
@@ -70,7 +70,7 @@ If you want to validate locally before pushing:
 
 ```bash
 cp .env.prod.example .env.prod
-docker compose --env-file .env.prod -f docker-compose.prod.yml config
-docker compose --env-file .env.prod -f docker-compose.prod.yml up -d --build
-docker compose --env-file .env.prod -f docker-compose.prod.yml down
+docker compose --env-file .env.prod -f docker-compose.prod.yaml config
+docker compose --env-file .env.prod -f docker-compose.prod.yaml up -d --build
+docker compose --env-file .env.prod -f docker-compose.prod.yaml down
 ```
