@@ -8,6 +8,7 @@ import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 import ro.mateistanescu.matquizspringbootbackend.dtos.GameRoomDto;
 import ro.mateistanescu.matquizspringbootbackend.entity.GameRoom;
+import ro.mateistanescu.matquizspringbootbackend.entity.User;
 import ro.mateistanescu.matquizspringbootbackend.enums.GameStatus;
 import ro.mateistanescu.matquizspringbootbackend.mapper.GameMapper;
 import ro.mateistanescu.matquizspringbootbackend.repository.GameRoomRepository;
@@ -34,11 +35,19 @@ public class QuizTimeoutService {
         updatedRoom.setStatus(GameStatus.WAITING);
         roomRepository.save(updatedRoom);
 
+        User host = updatedRoom.getHost();
+
         GameRoomDto roomDto = gameMapper.toDto(updatedRoom);
 
         messagingTemplate.convertAndSend(
                 "/topic/room/" + roomCode,
                 roomDto
+        );
+
+        messagingTemplate.convertAndSendToUser(
+                host.getUsername(),
+                "/queue/timeout",
+                roomCode
         );
     }
 }

@@ -1,0 +1,64 @@
+.home {
+  align-items: center;
+  display: flex;
+  flex-direction: column;
+  gap: 18px;
+  padding-top: 60px;
+  padding-inline: clamp(30px, 3vw, 40px);
+  justify-content: center;
+  min-height: 70vh;
+  text-align: center;
+}
+
+.title {
+  color: #f7f3ff;
+  letter-spacing: 1px;
+}
+
+.subtitle {
+  color: rgba(247, 243, 255, 0.9);
+  max-width: 560px;
+}
+
+.actions {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 16px;
+  justify-content: center;
+  margin-top: 18px;
+}
+
+.primaryButton,
+.secondaryButton {
+  border-radius: 999px;
+  cursor: pointer;
+  font-size: 30px;
+  padding: 12px 60px;
+  transition: transform 0.2s ease, box-shadow 0.2s ease;
+}
+
+.primaryButton {
+  background: #db9600;
+  border: 2px solid rgba(255, 255, 255, 0.65);
+  color: #ffffff;
+  box-shadow: 0 12px 24px rgba(0, 0, 0, 0.3);
+}
+
+.primaryButton:hover {
+  background: #e2a20a;
+  box-shadow: 0 12px 26px rgba(0, 0, 0, 0.35);
+  transform: translateY(-2px);
+}
+
+.secondaryButton {
+  background: #56018c;
+  border: 2px solid rgba(255, 255, 255, 0.65);
+  color: #f7f3ff;
+}
+
+.secondaryButton:hover {
+  border-color: #ffffff;
+  color: #ffffff;
+  box-shadow: 0 12px 26px rgba(0, 0, 0, 0.35);
+  transform: translateY(-2px);
+}

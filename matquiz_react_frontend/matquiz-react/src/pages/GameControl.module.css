@@ -1,0 +1,141 @@
+.gameControl {
+  align-items: center;
+  display: flex;
+  justify-content: center;
+  min-height: calc(100vh - var(--navbar-height) - var(--navbar-gap));
+  padding: clamp(16px, 4vw, 32px);
+}
+
+.darkContainer {
+  background: rgba(33, 33, 33, 0.75);
+  border-radius: 47px;
+  box-shadow: 0 18px 40px rgba(0, 0, 0, 0.4);
+  min-height: min(778px, 82vh);
+  padding: clamp(20px, 4vw, 42px) clamp(20px, 4vw, 46px);
+  width: min(1523px, 94vw);
+}
+
+.panel {
+  background: rgba(86, 1, 140, 1);
+  border-radius: 37px;
+  box-shadow: 0 16px 32px rgba(0, 0, 0, 0.35);
+  min-height: min(620px, 70vh);
+  padding: clamp(24px, 4vw, 56px);
+}
+
+.backButton {
+  background: transparent;
+  border: 2px solid #d39506;
+  border-radius: 999px;
+  color: #d39506;
+  cursor: pointer;
+  font-size: clamp(18px, 3vw, 28px);
+  padding: 10px clamp(22px, 4vw, 36px);
+}
+
+.centerContent {
+  align-items: center;
+  display: grid;
+  gap: clamp(22px, 4vw, 42px);
+  justify-items: center;
+  margin-top: clamp(60px, 10vh, 140px);
+}
+
+.mainText {
+  color: #ffffff;
+  font-size: clamp(34px, 5vw, 66px);
+  margin: 0;
+  text-align: center;
+}
+
+.actionsRow {
+  display: grid;
+  gap: clamp(16px, 3vw, 24px);
+  grid-template-columns: repeat(2, minmax(0, 1fr));
+  max-width: 900px;
+  width: 100%;
+}
+
+.actionButton {
+  background: transparent;
+  border: 2px solid rgba(255, 255, 255, 0.9);
+  border-radius: 999px;
+  color: #ffffff;
+  cursor: pointer;
+  font-size: clamp(30px, 4.4vw, 56px);
+  padding: clamp(14px, 2.4vw, 20px);
+}
+
+.primaryButton {
+  background: rgba(211, 149, 6, 1);
+  border-color: rgba(211, 149, 6, 1);
+}
+
+.reconnectButton {
+  background: transparent;
+  border: 2px solid rgba(255, 255, 255, 0.9);
+  border-radius: 999px;
+  color: #ffffff;
+  cursor: pointer;
+  font-size: clamp(34px, 5vw, 60px);
+  max-width: 520px;
+  padding: clamp(14px, 2.4vw, 20px) clamp(32px, 5vw, 54px);
+  width: min(78vw, 520px);
+}
+
+.leaveButton {
+  background: transparent;
+  border: 2px solid #d39506;
+  border-radius: 999px;
+  color: #d39506;
+  cursor: pointer;
+  font-size: clamp(24px, 3.2vw, 36px);
+  padding: clamp(10px, 2vw, 14px) clamp(24px, 3vw, 44px);
+}
+
+.leaveButton:disabled {
+  cursor: not-allowed;
+  opacity: 0.6;
+}
+
+.roomHint {
+  color: rgba(255, 255, 255, 0.8);
+  font-size: clamp(20px, 3vw, 28px);
+  margin: 0;
+}
+
+.errorText {
+  color: #ffb5b5;
+  font-size: clamp(16px, 2.4vw, 24px);
+  margin: 0;
+  text-align: center;
+}
+
+.loadingBar {
+  animation: loading 1.4s ease-in-out infinite;
+  background: linear-gradient(90deg, #ffffff 0%, rgba(255, 255, 255, 0.3) 100%);
+  border-radius: 999px;
+  height: clamp(10px, 1.6vw, 14px);
+  width: min(440px, 80vw);
+}
+
+@keyframes loading {
+  0% {
+    opacity: 0.5;
+    transform: scaleX(0.6);
+  }
+  50% {
+    opacity: 1;
+    transform: scaleX(1);
+  }
+  100% {
+    opacity: 0.5;
+    transform: scaleX(0.6);
+  }
+}
+
+@media (max-width: 900px) {
+  .actionsRow {
+    grid-template-columns: 1fr;
+  }
+}

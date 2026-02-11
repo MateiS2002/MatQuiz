@@ -1,0 +1,84 @@
+:root {
+  --font-display: "Modak", "Comic Sans MS", "Trebuchet MS", cursive;
+  --font-body: "Modak", "Comic Sans MS", "Trebuchet MS", cursive;
+  --weight-regular: 400;
+  --size-h1: clamp(67px, 8.4vw, 160px);
+  --size-h2: clamp(44px, 6.9vw, 100px);
+  --size-h3: clamp(30px, 3vw, 45px);
+  --size-body: clamp(25px, 3vw, 35px);
+  --navbar-height: clamp(120px, 16vw, 187px);
+  --navbar-gap: clamp(12px, 3vw, 25px);
+}
+
+html {
+  font-family: var(--font-body), serif;
+  font-weight: var(--weight-regular);
+  overflow-x: hidden;
+  overflow-y: scroll;
+}
+
+*,
+*::before,
+*::after {
+  box-sizing: border-box;
+}
+
+body {
+  margin: 0;
+  font-family: inherit;
+  overflow-x: hidden;
+  -webkit-font-smoothing: antialiased;
+  -moz-osx-font-smoothing: grayscale;
+}
+
+#root {
+  overflow-x: hidden;
+}
+
+code {
+  font-family: inherit;
+}
+
+button,
+input,
+select,
+textarea {
+  font-family: inherit;
+}
+
+h1,
+h2,
+h3,
+p {
+  margin: 0;
+}
+
+h1 {
+  font-size: var(--size-h1);
+  font-weight: var(--weight-regular);
+  line-height: 1.1;
+}
+
+h2 {
+  font-size: var(--size-h2);
+  font-weight: var(--weight-regular);
+  line-height: 1.15;
+}
+
+h3 {
+  font-size: var(--size-h3);
+  font-weight: var(--weight-regular);
+  line-height: 1.2;
+}
+
+p {
+  font-size: var(--size-body);
+  font-weight: var(--weight-regular);
+  line-height: 1.5;
+}
+
+label {
+  font-size: var(--size-h3);
+  font-weight: var(--weight-regular);
+  line-height: 1.2;
+}

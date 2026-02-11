@@ -117,11 +117,15 @@ public class GameService {
     }
 
     @Transactional
-    public GameRoom startGame(StartGameRequest request) {
+    public GameRoom startGame(User user, StartGameRequest request) {
         String roomCode = request.getRoomCode().trim().toUpperCase();
 
         GameRoom room = gameRoomRepository.findByRoomCode(roomCode)
                 .orElseThrow(() -> new IllegalArgumentException("Room " + roomCode + " not found!"));
+
+        if (!room.getHost().getId().equals(user.getId())) {
+            throw new IllegalStateException("Only the host can start game!");
+        }
 
         if(room.getStatus() != GameStatus.READY){
             throw new IllegalStateException("Game cannot be started because it is not in READY state!");
@@ -182,7 +186,7 @@ public class GameService {
             try {
                 processReveal(roomCode, questionId);
             } catch (Exception e) {
-                log.error("Timed reveal failed for room {} question {}", roomCode, questionId, e);
+                log.warn("Timed reveal failed for room {} question {}", roomCode, questionId, e);
             }
         }, Instant.now().plusMillis(32000));
 
@@ -279,7 +283,14 @@ public class GameService {
 
     @Transactional
     public void processReveal(String roomCode, Long questionId) {
-        GameRoom room = fetchFullRoom(roomCode);
+        GameRoom room = new GameRoom();
+
+        try{
+            room = fetchFullRoom(roomCode);
+        } catch (Exception e){
+           return;
+        }
+
         LocalDateTime now = LocalDateTime.now();
 
         Question question = questionRepository.findById(questionId)
@@ -329,7 +340,7 @@ public class GameService {
         GameRoomDto roomDto = gameMapper.toDto(fetchFullRoom(roomCode));
         messagingTemplate.convertAndSend("/topic/room/" + roomCode, roomDto);
 
-        log.info("Auto-Reveal executed for room {}", roomCode);
+        log.info("Reveal executed for room {}", roomCode);
 
         int totalQuestions = room.getQuestionCount();
         if (room.getCurrentQuestionIndex() >= totalQuestions) {
@@ -388,6 +399,10 @@ public class GameService {
 
         if (room.getStatus() != GameStatus.WAITING && room.getStatus() != GameStatus.GENERATING) {
             throw new IllegalStateException("The quiz can be only generated when the room is waiting or generating!");
+        }
+
+        if (request.getTopic().length() > 30) {
+            throw new IllegalArgumentException("Topic cannot be longer than 30 characters!");
         }
 
         //TODO: Implement quiz generation timeout
@@ -470,6 +485,11 @@ public class GameService {
         log.info("Player {} reconnected to Active Room {}", username, targetPlayer.getGameRoom().getRoomCode());
 
         return fetchFullRoom(targetPlayer.getGameRoom().getRoomCode());
+    }
+
+    @Transactional
+    public boolean hasActiveGame(String username) {
+        return !gamePlayerRepository.findAllActiveGamesForUser(username, GameStatus.FINISHED).isEmpty();
     }
 
     @Transactional
@@ -566,7 +586,8 @@ public class GameService {
             throw new IllegalStateException("Game is already finished!");
         }
 
-        gameRoomRepository.delete(room);
+        room.setStatus(GameStatus.FINISHED);
+        gameRoomRepository.save(room);
     }
 
     /**

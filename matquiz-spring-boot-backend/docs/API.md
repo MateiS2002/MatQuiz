@@ -99,6 +99,7 @@ All game-related communication happens via **STOMP over WebSockets**.
 - **Behavior:**
     - Only the host can generate the quiz.
     - Room status must be `WAITING`.
+    - `topic` length must be at most 30 characters.
     - `difficulty` must be `EASY` or `ADVANCED`.
     - Room status changes to `GENERATING`, then to `READY` when complete.
     - 5 questions are generated and stored.
@@ -242,6 +243,16 @@ All game-related communication happens via **STOMP over WebSockets**.
     - Sent to each player who didn't answer a question when the auto reveal happens.
     - Indicates that 0 points were automatically assigned for that question.
 
+#### Quiz Generation Timeout
+**When quiz generation remains in `GENERATING` beyond the timeout window.**
+
+- **Public Broadcast:** `/topic/room/{roomCode}` → `GameRoomDto` (status reset to `WAITING`)
+- **Private Response (Host):** `/user/queue/timeout` → `String` (room code)
+- **Behavior:**
+    - The room is reset from `GENERATING` back to `WAITING`.
+    - The host is notified privately so the client can show a timeout popup.
+    - Players receive updated room state through the room topic broadcast.
+
 #### Error Messages
 **When an action fails.**
 
@@ -249,6 +260,7 @@ All game-related communication happens via **STOMP over WebSockets**.
 - **Examples:**
     - "Room not found"
     - "Only the host can generate the quiz!"
+    - "Topic cannot be longer than 30 characters!"
     - "You have already answered this question!"
     - "Only the host can request correct answers!"
     - "Only the host can request room results!"
@@ -267,11 +279,24 @@ All game-related communication happens via **STOMP over WebSockets**.
   {
     "username": "matei",
     "password": "securePass123",
-    "email": "matei@example.com",
-    "avatarUrl": "https://..."
+    "email": "matei@example.com"
   }
   ```
-- **Response:** `Boolean` (true if successful)
+- **Success Response:** `201 Created`
+  - Body: `true`
+- **Error Responses:**
+  - `409 Conflict` (duplicate username/email)
+    ```json
+    {
+      "message": "This username is already taken."
+    }
+    ```
+    ```json
+    {
+      "message": "This email is already in use."
+    }
+    ```
+  - `400 Bad Request` (invalid payload / missing required fields)
 
 ---
 
@@ -297,15 +322,87 @@ All game-related communication happens via **STOMP over WebSockets**.
     "id": 1,
     "username": "matei",
     "email": "matei@example.com",
-    "role": "USER",
+    "role": "ROLE_USER",
     "eloRating": 1000,
+    "lastGamePoints": 0,
     "avatarUrl": "https://..."
   }
   ```
 
 ---
 
-### 4. Get Leaderboard (All Players)
+### 4. Set Profile Picture
+- **Endpoint:** `PATCH /api/auth/setProfilePicture`
+- **Headers:** `Authorization: Bearer <JWT_TOKEN>`
+- **Payload:**
+  ```json
+  {
+    "avatarUrl": "https://media.mateistanescu.ro/7.png"
+  }
+  ```
+- **Response:** `UserSummaryDto`
+
+---
+
+### 5. Change Username
+- **Endpoint:** `PATCH /api/auth/changeUsername`
+- **Headers:** `Authorization: Bearer <JWT_TOKEN>`
+- **Payload:**
+  ```json
+  {
+    "newUsername": "matei_2026"
+  }
+  ```
+- **Response:** `SessionRefreshDto`
+  ```json
+  {
+    "accessToken": "<JWT_TOKEN>",
+    "user": {
+      "id": 1,
+      "username": "matei_2026",
+      "email": "matei@example.com",
+      "role": "ROLE_USER",
+      "eloRating": 1000,
+      "lastGamePoints": 0,
+      "avatarUrl": "https://media.mateistanescu.ro/7.png"
+    }
+  }
+  ```
+
+---
+
+### 6. Change Email
+- **Endpoint:** `PATCH /api/auth/changeEmail`
+- **Headers:** `Authorization: Bearer <JWT_TOKEN>`
+- **Payload:**
+  ```json
+  {
+    "newEmail": "matei.2026@example.com"
+  }
+  ```
+- **Response:** `SessionRefreshDto`
+
+---
+
+### 7. Change Password
+- **Endpoint:** `PATCH /api/auth/changePassword`
+- **Headers:** `Authorization: Bearer <JWT_TOKEN>`
+- **Payload:**
+  ```json
+  {
+    "currentPassword": "OldPassword123",
+    "newPassword": "NewPassword123"
+  }
+  ```
+- **Response:** `SessionRefreshDto`
+
+**Validation Rules:**
+- `newPassword` must be 8-72 chars and include uppercase, lowercase, and a digit.
+- `newPassword` must be different from the current password.
+
+---
+
+### 8. Get Leaderboard (All Players)
 - **Endpoint:** `GET /api/auth/leaderboard`
 - **Headers:** `Authorization: Bearer <JWT_TOKEN>`
 - **Response:**
@@ -326,7 +423,7 @@ All game-related communication happens via **STOMP over WebSockets**.
 
 ---
 
-### 5. Get Leaderboard (Specific User)
+### 9. Get Leaderboard (Specific User)
 - **Endpoint:** `POST /api/auth/leaderboard`
 - **Headers:** `Authorization: Bearer <JWT_TOKEN>`
 - **Payload:**
@@ -348,13 +445,48 @@ All game-related communication happens via **STOMP over WebSockets**.
 
 ---
 
-### 6. Who Am I
+### 10. Who Am I
 - **Endpoint:** `GET /api/auth/whoami`
 - **Headers:** `Authorization: Bearer <JWT_TOKEN>`
 - **Response:** `String`
   ```
   You are: matei with authorities [ROLE_USER]
   ```
+
+---
+
+### 11. Has Active Game
+- **Endpoint:** `GET /api/auth/active`
+- **Headers:** `Authorization: Bearer <JWT_TOKEN>`
+- **Response:**
+  ```json
+  {
+    "hasActiveGame": true
+  }
+  ```
+
+**Notes:**
+- Returns a lightweight boolean used by the frontend `Game Control` page.
+- If `hasActiveGame` is `true`, the client should call `/app/reconnect` to restore full room state.
+
+---
+
+## Client Integration Notes
+
+### Browser-Level Exit Protection (Recommended)
+When a user is inside the game flow (`/game-control`, `/join`, `/create`, `/lobby`), the frontend should guard exits to avoid accidental disconnects that are not communicated as explicit room leaves.
+
+- **Guarded actions:** logo click, navbar navigation, back buttons, route switches, browser refresh/tab close.
+- **UX recommendation:** show a confirmation modal before exiting the flow.
+- **If user confirms and room code is known:**
+  1. Send `LeaveRoomRequest` to `/app/leave`.
+  2. Wait for `/user/queue/left` confirmation.
+  3. Navigate away only after leave confirmation (or a short timeout fallback).
+- **If browser closes/reloads abruptly:** an explicit `/app/leave` may not complete; rely on:
+  - `SessionDisconnectEvent` handling on backend (marks player disconnected), and
+  - reconnect flow on next load (`GET /api/auth/active` then `/app/reconnect` if active).
+
+This pattern keeps room membership consistent and prevents "ghost connected" states from pure client-side navigation.
 
 ---
 
@@ -497,6 +629,21 @@ All game-related communication happens via **STOMP over WebSockets**.
 
 ---
 
+### `ActiveGameDto`
+**Represents whether the authenticated user currently has an active game.**
+
+```json
+{
+  "hasActiveGame": true
+}
+```
+
+**Notes:**
+- `true` means the user has at least one game where room status is not `FINISHED`.
+- Intended for REST pre-checks before attempting WebSocket reconnect.
+
+---
+
 ### `GamePlayerDto`
 **Represents a player in the room.**
 
@@ -519,9 +666,30 @@ All game-related communication happens via **STOMP over WebSockets**.
   "id": 1,
   "username": "matei",
   "email": "example@gmail.com",
-  "role": "admin",
+  "role": "ROLE_USER",
   "eloRating": 1000,
+  "lastGamePoints": 0,
   "avatarUrl": "https://..."
+}
+```
+
+---
+
+### `SessionRefreshDto`
+**Returned after account updates that re-issue a JWT.**
+
+```json
+{
+  "accessToken": "<JWT_TOKEN>",
+  "user": {
+    "id": 1,
+    "username": "matei",
+    "email": "matei@example.com",
+    "role": "ROLE_USER",
+    "eloRating": 1000,
+    "lastGamePoints": 0,
+    "avatarUrl": "https://media.mateistanescu.ro/4.png"
+  }
 }
 ```
 
@@ -608,6 +776,35 @@ All game-related communication happens via **STOMP over WebSockets**.
 **Notes:**
 - Used when requesting a specific user's leaderboard entry.
 - If `username` is `null`, the full leaderboard is returned (use GET endpoint instead).
+
+### `SetProfilePictureRequestDto`
+```json
+{
+  "avatarUrl": "https://media.mateistanescu.ro/9.png"
+}
+```
+
+### `ChangeUsernameRequestDto`
+```json
+{
+  "newUsername": "matei_2026"
+}
+```
+
+### `ChangeEmailRequestDto`
+```json
+{
+  "newEmail": "matei.2026@example.com"
+}
+```
+
+### `ChangePasswordRequestDto`
+```json
+{
+  "currentPassword": "OldPassword123",
+  "newPassword": "NewPassword123"
+}
+```
 
 ---
 
@@ -713,7 +910,10 @@ All errors are sent to `/user/queue/errors` as plain `String` messages.
 
 ### Session Management
 - Use `GET /api/auth/session` to retrieve the current user's session information.
+- Use `GET /api/auth/active` to quickly check if the user has an active room before reconnecting.
 - Use `GET /api/auth/whoami` to verify authentication and get user details.
+- Use `PATCH /api/auth/changeUsername`, `PATCH /api/auth/changeEmail`, and `PATCH /api/auth/changePassword` for account updates.
+- Replace the stored JWT with `accessToken` returned by `SessionRefreshDto` after account updates.
 - Store the JWT token securely and include it in the WebSocket connection headers.
 
 ### Room Management
@@ -721,6 +921,7 @@ All errors are sent to `/user/queue/errors` as plain `String` messages.
 - Players cannot join rooms with status `PLAYING` or `FINISHED`.
 - When the host leaves, the host is transferred to the next player.
 - When the last player leaves, the room is deleted.
+- Use REST `GET /api/auth/active` for active-room presence checks.
 - Players can reconnect to active games using `/app/reconnect`.
 
 ### Quiz Generation
@@ -734,11 +935,9 @@ All errors are sent to `/user/queue/errors` as plain `String` messages.
 ## TODO (Planned)
 
 ### User & Profile
-- Add endpoint to update user profile (username, avatar, bio).
 - Add endpoint to fetch user stats (games played, win rate, average score, streaks).
 - Add endpoint for match history / recent games.
 
 ---
 
-**Last Updated:** 2026-01-28
-```
+**Last Updated:** 2026-02-11

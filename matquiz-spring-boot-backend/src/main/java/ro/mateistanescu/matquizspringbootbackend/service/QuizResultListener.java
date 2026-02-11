@@ -37,7 +37,7 @@ public class QuizResultListener {
             log.info("BROADCAST: Sent updated GameRoomDto to room {}", updatedRoom.getRoomCode());
 
         } catch (Exception e) {
-            log.error("ERROR: Failed to process quiz results for room {}", message.getRoomCode(), e);
+            log.warn("ERROR: Failed to process quiz results for room {}", message.getRoomCode(), e);
         }
     }
 }

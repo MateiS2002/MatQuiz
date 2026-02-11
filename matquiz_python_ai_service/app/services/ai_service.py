@@ -15,7 +15,7 @@ class AiService:
         topic = topic.lower().strip()
 
         prompt = (
-            f"You are a master entertainer at a game show. Generate a quiz with 5 questions about {topic}. "
+            f"You are a master entertainer at a game show. Generate a quiz with 5 questions about {topic}(if the topic is dangerous or offensive or typo you can choose a random fun subject). "
             f"The difficulty should be {difficulty}. "
             "Ensure the questions are challenging but fair and also they should feel fun for an online quiz game, not academic."
         )

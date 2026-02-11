@@ -1,0 +1,121 @@
+.register {
+  align-items: center;
+  display: flex;
+  justify-content: center;
+  min-height: calc(100vh - var(--navbar-height) - var(--navbar-gap));
+  padding: clamp(16px, 4vw, 32px) clamp(12px, 3vw, 20px)
+    clamp(32px, 6vw, 48px);
+}
+
+.darkContainer {
+  background: rgba(33, 33, 33, 0.75);
+  border-radius: 47px;
+  box-shadow: 0 18px 40px rgba(0, 0, 0, 0.4);
+  min-height: min(778px, 82vh);
+  padding: clamp(20px, 4vw, 42px) clamp(20px, 4vw, 46px);
+  width: min(1523px, 94vw);
+}
+
+.formCard {
+  background: rgba(86, 1, 140, 1);
+  border-radius: 37px;
+  min-height: min(546px, 62vh);
+  margin: 0 auto;
+  padding: clamp(24px, 4vw, 48px) clamp(24px, 4vw, 56px);
+  width: min(1023px, 80vw);
+}
+
+.form {
+  display: flex;
+  flex-direction: column;
+  gap: clamp(14px, 3vw, 18px);
+}
+
+.field {
+  color: white;
+  display: flex;
+  flex-direction: column;
+  gap: 10px;
+  margin: 0 auto;
+  max-width: 729px;
+  text-align: left;
+  width: 100%;
+}
+
+.input {
+  background: #6a00ac;
+  border: 2px solid #ffffff;
+  border-radius: 999px;
+  color: #ffffff;
+  font-size: clamp(18px, 3vw, 32px);
+  height: 75px;
+  padding: 0 clamp(20px, 4vw, 28px);
+  text-align: left;
+  width: 100%;
+}
+
+.input:focus {
+  border-color: rgba(255, 255, 255, 0.5);
+  outline: none;
+}
+
+.input::placeholder {
+  color: #c4c3c3;
+  font-size: 45px;
+  opacity: 1;
+}
+
+.error {
+  color: #ffd1d1;
+  margin: 0;
+}
+
+.termsText {
+  color: rgba(247, 243, 255, 0.9);
+  font-size: 20px;
+  margin: 6px 0 0;
+  text-align: center;
+}
+
+.termsLink {
+  color: #ffffff;
+  text-decoration: underline;
+}
+
+.actions {
+  display: flex;
+  justify-content: center;
+  margin: clamp(20px, 4vw, 34px) auto 0;
+  max-width: 1023px;
+  width: min(1023px, 80vw);
+}
+
+.primaryButton {
+  background: #d39506;
+  border: 2px solid rgba(255, 255, 255, 0.7);
+  border-radius: 999px;
+  color: #ffffff;
+  cursor: pointer;
+  font-size: clamp(28px, 5vw, 60px);
+  height: clamp(64px, 12vw, 121px);
+  padding: clamp(10px, 2.8vw, 16px) clamp(16px, 4vw, 28px);
+  text-align: center;
+  width: min(488px, 100%);
+  transition: transform 0.2s ease, box-shadow 0.2s ease;
+}
+
+.primaryButton:hover {
+  box-shadow: 0 12px 26px rgba(0, 0, 0, 0.35);
+  transform: translateY(-2px);
+}
+
+.primaryButton:disabled {
+  cursor: wait;
+  opacity: 0.7;
+}
+
+@media (max-width: 720px) {
+  .darkContainer {
+    min-height: auto;
+  }
+}

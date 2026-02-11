@@ -41,7 +41,11 @@ public class JwtService {
                 .build();
 
         try {
-            Jws<Claims> jwt = parser.parseSignedClaims(token.substring(token.indexOf(" ") + 1));
+            String normalizedToken = token.startsWith("Bearer ")
+                    ? token.substring(7).trim()
+                    : token.trim();
+
+            Jws<Claims> jwt = parser.parseSignedClaims(normalizedToken);
             return jwt.getPayload().getSubject();
         } catch (Exception ex) {
             throw new UsernameNotFoundException("Invalid token");

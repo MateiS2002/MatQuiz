@@ -1,0 +1,25 @@
+.appShell {
+  background: #56018c;
+  min-height: 100vh;
+  position: relative;
+  overflow: hidden;
+}
+
+.appShell::before {
+  content: "";
+  position: fixed;
+  left: 50%;
+  transform: translateX(-50%);
+  width: 100vw;
+  height: 200vh;
+  border-radius: 999px;
+  background: #7700c0;
+  z-index: 0;
+  pointer-events: none;
+}
+
+.appContent {
+  position: relative;
+  z-index: 1;
+  min-height: 100vh;
+}

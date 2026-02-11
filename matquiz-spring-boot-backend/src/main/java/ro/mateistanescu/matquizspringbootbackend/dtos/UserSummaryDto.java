@@ -12,5 +12,6 @@ public class UserSummaryDto {
     private String email;
     private Role role;
     private Integer eloRating;
+    private Integer lastGamePoints;
     private String avatarUrl;
 }

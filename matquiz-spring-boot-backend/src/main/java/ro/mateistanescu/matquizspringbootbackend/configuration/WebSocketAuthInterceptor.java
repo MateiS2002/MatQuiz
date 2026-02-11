@@ -16,6 +16,7 @@ import ro.mateistanescu.matquizspringbootbackend.service.UserService;
 
 import java.util.Collections;
 import java.util.List;
+import java.util.Optional;
 
 /**
  * Intercepts incoming STOMP messages to handle Authentication.
@@ -31,16 +32,16 @@ public class WebSocketAuthInterceptor implements ChannelInterceptor {
     public Message<?> preSend(Message<?> message, MessageChannel channel) {
         StompHeaderAccessor accessor = MessageHeaderAccessor.getAccessor(message, StompHeaderAccessor.class);
 
-        assert accessor != null;
+        if (accessor == null) {
+            return message;
+        }
 
         if (StompCommand.CONNECT.equals(accessor.getCommand())) {
-            List<String> authorization = accessor.getNativeHeader("Authorization");
+            Optional<String> token = extractBearerToken(accessor.getNativeHeader("Authorization"));
 
-            if (authorization != null && !authorization.isEmpty()) {
-                String token = authorization.get(0).substring(7); // Remove "Bearer "
-
+            if (token.isPresent()) {
                 try {
-                    User user = userService.validateUser(token);
+                    User user = userService.validateUser(token.get());
 
                     if (user != null) {
                         SimpleGrantedAuthority authority = new SimpleGrantedAuthority(user.getRole().name());
@@ -53,12 +54,37 @@ public class WebSocketAuthInterceptor implements ChannelInterceptor {
 
                         accessor.setUser(authentication);
                         log.info("WebSocket Authenticated: {}", user.getUsername());
+                    } else {
+                        log.warn("WebSocket Authentication Failed: User not found");
+                        return null;
                     }
                 } catch (Exception e) {
-                    log.error("WebSocket Authentication Failed: {}", e.getMessage());
+                    log.warn("WebSocket Authentication Failed: {}", e.getMessage());
+                    return null;
                 }
+            } else {
+                log.warn("WebSocket Authentication Failed: Missing or malformed Authorization header");
+                return null;
             }
         }
         return message;
+    }
+
+    private Optional<String> extractBearerToken(List<String> authorizationHeaders) {
+        if (authorizationHeaders == null || authorizationHeaders.isEmpty()) {
+            return Optional.empty();
+        }
+
+        String header = authorizationHeaders.get(0);
+        if (header == null || !header.startsWith("Bearer ")) {
+            return Optional.empty();
+        }
+
+        String token = header.substring(7).trim();
+        if (token.isEmpty()) {
+            return Optional.empty();
+        }
+
+        return Optional.of(token);
     }
 }

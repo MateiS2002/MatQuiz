@@ -11,6 +11,14 @@ import java.util.Optional;
 public interface UserRepository extends JpaRepository<User, Long> {
     Optional<User> findByUsername(String username);
 
+    boolean existsByUsernameIgnoreCase(String username);
+
+    boolean existsByEmailIgnoreCase(String email);
+
+    boolean existsByUsernameIgnoreCaseAndIdNot(String username, Long id);
+
+    boolean existsByEmailIgnoreCaseAndIdNot(String email, Long id);
+
     /**
      * Find top 100 users ordered by ELO rating descending.
      * Used for leaderboard functionality.
