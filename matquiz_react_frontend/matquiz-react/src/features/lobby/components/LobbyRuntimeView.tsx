@@ -263,11 +263,7 @@ const LobbyRuntimeView = ({
               <p className={styles.revealQuestionText}>{displayedQuestion.question_text}</p>
             </div>
             <div className={styles.revealCorrectRow}>
-              <p className={styles.revealCorrectLabel}>
-                Correct
-                <br />
-                Answer
-              </p>
+              <p className={styles.revealCorrectLabel}>Correct Answer</p>
               <p className={styles.revealCorrectValue}>{correctLabel}</p>
             </div>
           </article>
@@ -440,6 +436,7 @@ const LobbyRuntimeView = ({
     <div
       className={`${styles.runtimeLayout} ${
         isCountdownStage ? styles.runtimeLayoutCountdown : ""
+      } ${stage !== "RESULTS" ? styles.runtimeLayoutWithOverlay : ""}
       }`}
     >
       <div

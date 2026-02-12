@@ -124,17 +124,28 @@ const Leaderboard = () => {
                   #{userEntry?.rank ?? "--"}
                 </span>
                 <span className={styles.rowName}>
-                  (You) #{user?.username ?? "John23"}
+                  <span className={styles.rowNameSelf}>(You)</span>
+                  <span className={styles.rowNameText}>
+                    #{user?.username ?? "John23"}
+                  </span>
                 </span>
                 <span className={styles.rowElo}>
-                  {userEntry?.eloRating ?? user?.eloRating ?? 1450} ELO
+                  <span className={styles.rowEloValue}>
+                    {userEntry?.eloRating ?? user?.eloRating ?? 1450}
+                  </span>
+                  <span className={styles.rowEloUnit}>ELO</span>
                 </span>
               </div>
               {leaderboard.map(entry => (
                 <div key={entry.rank} className={styles.row}>
                   <span className={styles.rowRank}>#{entry.rank}</span>
-                  <span className={styles.rowName}>#{entry.username}</span>
-                  <span className={styles.rowElo}>{entry.eloRating} ELO</span>
+                  <span className={styles.rowName}>
+                    <span className={styles.rowNameText}>#{entry.username}</span>
+                  </span>
+                  <span className={styles.rowElo}>
+                    <span className={styles.rowEloValue}>{entry.eloRating}</span>
+                    <span className={styles.rowEloUnit}>ELO</span>
+                  </span>
                 </div>
               ))}
             </div>

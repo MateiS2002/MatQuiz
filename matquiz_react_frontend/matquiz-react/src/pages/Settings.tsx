@@ -12,6 +12,15 @@ const Settings = () => {
       <div className={styles.darkContainer}>
         <div className={styles.content}>
           <div className={styles.mainCard}>
+            <p className={styles.description}>
+              This mini-game is my portfolio project and it is open-source, all
+              the info about the architecture is on my Github profile so if you
+              have any ideas or suggestions you can check my contact form. If
+              you enjoyed the game please give me a follow on Github.
+            </p>
+            <Link className={styles.contactButton} to={ROUTES.contact}>
+              Contact / Bug-report
+            </Link>
             <div className={styles.topActions}>
               <button className={styles.iconButton} type="button">
                 Mute Sound
@@ -25,15 +34,6 @@ const Settings = () => {
                 Github
               </a>
             </div>
-            <p className={styles.description}>
-              This mini-game is my portfolio project and it is open-source, all
-              the info about the architecture is on my Github profile so if you
-              have any ideas or suggestions you can check my contact form. If
-              you enjoyed the game please give me a follow on Github.
-            </p>
-            <Link className={styles.contactButton} to={ROUTES.contact}>
-              Contact / Bug-report
-            </Link>
           </div>
           <div className={styles.sidebar}>
             <div className={styles.userCard}>

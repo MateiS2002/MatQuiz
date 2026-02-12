@@ -6,6 +6,7 @@ import {
   useGetActiveGameQuery,
   useGetSessionQuery,
 } from "@/features/auth/api/authApiSlice"
+import profilePlaceholder from "@/assets/profile-placeholder.png"
 import {
   useLeaveRoomMutation,
   useReconnectRoomMutation,
@@ -138,80 +139,96 @@ const GameControl = () => {
             : { duration: 0.28, ease: "easeOut" }
         }
       >
-        <div className={styles.panel}>
-          <button
-            type="button"
-            className={styles.backButton}
-            onClick={() => {
-              requestExit(() => {
-                void navigate(ROUTES.home)
-              })
-            }}
-          >
-            Back
-          </button>
-
-          {view === "checking" ? (
-            <div className={styles.centerContent}>
-              <p className={styles.mainText}>Checking your active games...</p>
-              <div className={styles.loadingBar} />
-            </div>
-          ) : null}
-
-          {view === "idle" ? (
-            <div className={styles.centerContent}>
-              <p className={styles.mainText}>
-                Welcome back, {user?.username ?? "player"}!
-              </p>
-              <div className={styles.actionsRow}>
-                <button
-                  type="button"
-                  className={`${styles.actionButton} ${styles.primaryButton}`}
-                  onClick={() => {
-                    void navigate(ROUTES.join)
-                  }}
-                >
-                  Join
-                </button>
-                <button
-                  type="button"
-                  className={styles.actionButton}
-                  onClick={() => {
-                    void navigate(ROUTES.create)
-                  }}
-                >
-                  Create game
-                </button>
+        <div className={styles.content}>
+          <div className={styles.mainCard}>
+            {view === "checking" ? (
+              <div className={styles.centerContent}>
+                <p className={styles.mainText}>Checking your active games...</p>
+                <div className={styles.loadingBar} />
               </div>
-              {error ? <p className={styles.errorText}>{error}</p> : null}
-            </div>
-          ) : null}
+            ) : null}
 
-          {view === "active" ? (
-            <div className={styles.centerContent}>
-              <p className={styles.mainText}>You have an active game room!</p>
-              <button
-                type="button"
-                className={styles.reconnectButton}
-                onClick={handleReconnect}
-                disabled={isReconnecting}
-              >
-                Reconnect
-              </button>
-              <button
-                type="button"
-                className={styles.leaveButton}
-                onClick={handleLeave}
-                disabled={isLeaving || isReconnecting}
-              >
-                Leave
-              </button>
-              {activeRoomCode ? (
-                <p className={styles.roomHint}>Room #{activeRoomCode}</p>
-              ) : null}
-              {error ? <p className={styles.errorText}>{error}</p> : null}
+            {view === "idle" ? (
+              <div className={styles.centerContent}>
+                <p className={styles.mainText}>
+                  Welcome back, {user?.username ?? "player"}!
+                </p>
+                <div className={styles.actionsRow}>
+                  <button
+                    type="button"
+                    className={`${styles.actionButton} ${styles.primaryButton}`}
+                    onClick={() => {
+                      void navigate(ROUTES.join)
+                    }}
+                  >
+                    Join
+                  </button>
+                  <button
+                    type="button"
+                    className={styles.actionButton}
+                    onClick={() => {
+                      void navigate(ROUTES.create)
+                    }}
+                  >
+                    Create game
+                  </button>
+                </div>
+                {error ? <p className={styles.errorText}>{error}</p> : null}
+              </div>
+            ) : null}
+
+            {view === "active" ? (
+              <div className={styles.centerContent}>
+                <p className={styles.mainText}>You have an active game room!</p>
+                <div className={styles.actionsColumn}>
+                  <button
+                    type="button"
+                    className={styles.reconnectButton}
+                    onClick={handleReconnect}
+                    disabled={isReconnecting}
+                  >
+                    Reconnect
+                  </button>
+                  <button
+                    type="button"
+                    className={styles.leaveButton}
+                    onClick={handleLeave}
+                    disabled={isLeaving || isReconnecting}
+                  >
+                    Leave
+                  </button>
+                </div>
+                {activeRoomCode ? (
+                  <p className={styles.roomHint}>Room #{activeRoomCode}</p>
+                ) : null}
+                {error ? <p className={styles.errorText}>{error}</p> : null}
+              </div>
+            ) : null}
+          </div>
+          <aside className={styles.sidebar}>
+            <div className={styles.userCard}>
+              <p className={styles.cardTitle}>You</p>
+              <div className={styles.avatar}>
+                <img
+                  src={user?.avatarUrl ?? profilePlaceholder}
+                  alt={user?.username ?? "Profile avatar"}
+                  className={styles.avatarImage}
+                />
+              </div>
+              <p className={styles.cardSubtitle}>#{user?.username ?? "John23"}</p>
             </div>
-          ) : null}
+            <button
+              type="button"
+              className={styles.exitButton}
+              onClick={() => {
+                requestExit(() => {
+                  void navigate(ROUTES.home)
+                })
+              }}
+            >
+              Exit
+            </button>
+          </aside>
         </div>
       </motion.div>
       <LeaveGameModal

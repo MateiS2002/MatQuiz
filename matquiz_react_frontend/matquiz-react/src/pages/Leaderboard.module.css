@@ -1,144 +1,336 @@
+/**
+ * Leaderboard styling follows the same layout model as Profile:
+ * fixed viewport shell, frosted dark container, scalable tokens, and
+ * responsive card stacking while preserving scroll reachability.
+ */
 .leaderboard {
-  --leaderboard-available-height: calc(
-    100vh - var(--navbar-height) - var(--navbar-gap)
-  );
-  align-items: flex-start;
+  --leaderboard-shell-max-width: 1523px;
+  --leaderboard-shell-radius: 47px;
+  --leaderboard-card-radius: 37px;
+  --leaderboard-panel-radius: 37px;
+  --leaderboard-shell-bg: rgba(33, 33, 33, 0.75);
+  --leaderboard-surface: #56018c;
+  --leaderboard-input-bg: #6a00ac;
+  --leaderboard-border: #ffffff;
+  --leaderboard-text: #ffffff;
+  --leaderboard-title-accent: #ffaf02;
+  --leaderboard-positive: #65e359;
+  --leaderboard-shell-inline: clamp(10px, 2.8vw, 26px);
+  align-items: center;
   display: flex;
   justify-content: center;
-  min-height: var(--leaderboard-available-height);
-  height: var(--leaderboard-available-height);
-  overflow: hidden;
-  padding: 12px clamp(16px, 4vw, 32px) 12px;
+  block-size: 88vh;
+  block-size: 88dvh;
+  padding: 0 var(--leaderboard-shell-inline);
 }
 
 .darkContainer {
-  background: rgba(33, 33, 33, 0.75);
-  border-radius: 47px;
-  box-shadow: 0 18px 40px rgba(0, 0, 0, 0.4);
-  margin-inline: auto;
-  min-height: min(778px, 82vh);
-  padding: clamp(20px, 4vw, 42px) clamp(20px, 4vw, 46px);
-  transform: scale(var(--leaderboard-content-scale, 1));
-  transform-origin: top center;
-  will-change: transform;
-  width: min(1523px, 94vw);
+  backdrop-filter: blur(6.65px);
+  -webkit-backdrop-filter: blur(6.65px);
+  background: var(--leaderboard-shell-bg);
+  border-radius: var(--leaderboard-shell-radius);
+  box-shadow: 0 18px 40px rgba(0, 0, 0, 0.35);
+  inline-size: min(100%, var(--leaderboard-shell-max-width));
+  block-size: 87vh;
+  block-size: 87dvh;
+  margin-block-end: 1vh;
+  overflow: hidden;
+  padding: clamp(18px, 2.8vw, 32px);
 }
 
 .content {
+  block-size: 100%;
   display: grid;
-  gap: clamp(24px, 4vw, 40px);
-  grid-template-columns: minmax(0, 1fr) minmax(0, 360px);
+  gap: clamp(16px, 1.8vw, 30px);
+  grid-template-columns: minmax(0, 1fr) minmax(300px, 400px);
+  min-block-size: 0;
+}
+
+.listCard,
+.userCard,
+.statsCard {
+  background: var(--leaderboard-surface);
 }
 
 .listCard {
-  background: rgba(86, 1, 140, 1);
-  border-radius: 37px;
-  min-height: min(546px, 62vh);
-  padding: clamp(24px, 4vw, 36px);
+  border-radius: var(--leaderboard-card-radius);
+  box-shadow: 10px 9px 6.5px rgba(0, 0, 0, 0.25);
+  display: flex;
+  min-block-size: 0;
+  padding: clamp(18px, 2.2vh, 32px) clamp(14px, 1.8vw, 28px);
 }
 
 .scrollArea {
+  align-content: start;
+  block-size: 100%;
   display: grid;
-  gap: clamp(12px, 2.4vw, 18px);
-  max-height: min(600px, 90vh);
-  overflow-y: scroll;
-  scrollbar-gutter: stable;
-  padding-right: 16px;
+  flex: 1 1 auto;
+  gap: clamp(10px, 1.2vh, 16px);
+  inline-size: 100%;
+  min-block-size: 0;
+  min-inline-size: 0;
+  overflow-y: auto;
+  overscroll-behavior: contain;
+  padding-inline-end: clamp(14px, 1.4vw, 22px);
 }
 
-.scrollArea::-webkit-scrollbar {
-  width: 10px;
+.content,
+.scrollArea,
+.sidebar {
+  scrollbar-color: #ffffff transparent;
+  scrollbar-width: thin;
 }
 
-.scrollArea::-webkit-scrollbar-track {
-  background: rgba(255, 255, 255, 0.08);
-  border-radius: 999px;
+.content::-webkit-scrollbar,
+.scrollArea::-webkit-scrollbar,
+.sidebar::-webkit-scrollbar {
+  inline-size: 8px;
 }
 
-.scrollArea::-webkit-scrollbar-thumb {
+.content::-webkit-scrollbar-track,
+.scrollArea::-webkit-scrollbar-track,
+.sidebar::-webkit-scrollbar-track {
+  background: transparent;
+}
+
+.content::-webkit-scrollbar-thumb,
+.scrollArea::-webkit-scrollbar-thumb,
+.sidebar::-webkit-scrollbar-thumb {
   background: #ffffff;
+  border: 1px solid transparent;
+  background-clip: padding-box;
   border-radius: 999px;
 }
 
 .row {
   align-items: center;
-  border: 2px solid rgba(255, 255, 255, 0.7);
-  border-radius: 999px;
-  color: #ffffff;
+  background: var(--leaderboard-input-bg);
+  border: 2px solid var(--leaderboard-border);
+  border-radius: 37px;
+  box-shadow: inset 5px 3px 5.8px 3px rgba(0, 0, 0, 0.25);
+  color: var(--leaderboard-text);
   display: grid;
-  gap: clamp(10px, 2vw, 16px);
-  grid-template-columns: minmax(64px, 90px) minmax(0, 1fr) minmax(140px, 200px);
-  padding: clamp(10px, 2vw, 16px) clamp(14px, 3vw, 24px);
+  gap: clamp(8px, 1vw, 14px);
+  grid-template-columns: minmax(54px, 86px) minmax(0, 1fr) minmax(118px, 180px);
+  min-block-size: clamp(54px, 7.4vh, 74px);
+  padding: clamp(8px, 1vh, 12px) clamp(14px, 1.6vw, 24px);
 }
 
 .rowHighlight {
-  border-color: #d39506;
+  border-color: var(--leaderboard-title-accent);
+  box-shadow:
+    inset 5px 3px 5.8px 3px rgba(0, 0, 0, 0.25),
+    0 0 0 1px rgba(255, 175, 2, 0.35);
+}
+
+.rowRank,
+.rowName,
+.rowElo {
+  font-size: clamp(20px, 2.1vw, 34px);
+  line-height: 1;
+  white-space: nowrap;
 }
 
 .rowRank {
-  font-size: clamp(20px, 3vw, 30px);
+  color: var(--leaderboard-title-accent);
 }
 
 .rowName {
-  font-size: clamp(20px, 3vw, 30px);
+  align-items: center;
+  display: flex;
+  gap: clamp(6px, 0.7vw, 12px);
+  min-inline-size: 0;
+  overflow: hidden;
+}
+
+.rowNameSelf {
+  color: var(--leaderboard-title-accent);
+  flex: 0 0 auto;
+}
+
+.rowNameText {
+  min-inline-size: 0;
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
 }
 
 .rowElo {
-  font-size: clamp(20px, 3vw, 30px);
+  align-items: center;
+  display: inline-flex;
+  gap: clamp(4px, 0.6vw, 10px);
+  justify-content: flex-end;
   text-align: right;
 }
 
+.rowEloUnit {
+  color: var(--leaderboard-title-accent);
+}
+
+.rowEloValue {
+  color: var(--leaderboard-text);
+}
+
 .sidebar {
-  display: grid;
-  gap: clamp(18px, 3vw, 24px);
   align-content: start;
+  display: grid;
+  gap: clamp(16px, 2vh, 24px);
+  grid-template-rows: repeat(2, minmax(0, 1fr));
+  block-size: 100%;
+  min-block-size: 0;
+  overflow-y: auto;
+  padding-inline-end: clamp(18px, 1.8vw, 28px);
+  padding-block-end: clamp(16px, 2vh, 30px);
 }
 
 .userCard,
 .statsCard {
-  background: rgba(86, 1, 140, 1);
-  border-radius: 28px;
-  box-shadow: 0 12px 26px rgba(0, 0, 0, 0.35);
-  padding: clamp(20px, 3vw, 28px);
+  border-radius: var(--leaderboard-panel-radius);
+  box-shadow: 10px 9px 6.5px rgba(0, 0, 0, 0.25);
+  display: grid;
+  justify-items: center;
+  min-block-size: 0;
+  padding: clamp(18px, 2.4vh, 28px) clamp(12px, 1.5vw, 20px);
   text-align: center;
 }
 
+.userCard {
+  align-content: start;
+  gap: clamp(8px, 1.1vh, 14px);
+}
+
+.statsCard {
+  align-content: center;
+  gap: clamp(8px, 1.2vh, 16px);
+}
+
 .avatar {
-  background: rgba(255, 255, 255, 0.15);
+  --avatar-size: clamp(120px, 12vw, 170px);
   border-radius: 50%;
-  height: clamp(120px, 18vw, 160px);
-  margin: 16px auto;
+  margin: clamp(6px, 1vh, 12px) auto;
   overflow: hidden;
-  width: clamp(120px, 18vw, 160px);
+  inline-size: var(--avatar-size);
+  block-size: var(--avatar-size);
 }
 
 .avatarImage {
+  block-size: 100%;
   display: block;
-  height: 100%;
+  inline-size: 100%;
   object-fit: cover;
-  width: 100%;
 }
 
 .cardTitle {
-  color: #d39506;
-  font-size: clamp(22px, 3vw, 32px);
+  color: var(--leaderboard-title-accent);
+  font-size: clamp(24px, 2.5vw, 45px);
+  line-height: 1;
   margin: 0;
 }
 
 .cardSubtitle {
-  color: #ffffff;
-  font-size: clamp(20px, 3vw, 30px);
-  margin: 12px 0 0;
+  color: var(--leaderboard-text);
+  font-size: clamp(24px, 2.45vw, 45px);
+  line-height: 1.1;
+  margin: 0;
 }
 
 .cardAccent {
-  color: #7dfb7d;
-  font-size: clamp(22px, 3vw, 32px);
-  margin: 10px 0 0;
+  color: var(--leaderboard-positive);
+  font-size: clamp(24px, 2.45vw, 45px);
+  line-height: 1;
+  margin: 0;
 }
 
-@media (max-width: 900px) {
+@media (max-width: 1200px) {
+  .darkContainer {
+    min-block-size: 0;
+    overflow: hidden;
+  }
+
   .content {
+    block-size: 100%;
+    display: flex;
+    flex-direction: column;
+    min-block-size: 0;
+    overflow-y: auto;
+    overscroll-behavior: contain;
+    padding-inline-start: clamp(8px, 0.8vw, 14px);
+    padding-inline-end: clamp(18px, 1.8vw, 28px);
+    padding-block-start: clamp(2px, 0.3vh, 6px);
+    padding-block-end: clamp(14px, 1.6vh, 24px);
+    scrollbar-gutter: stable both-edges;
+  }
+
+  .sidebar {
+    grid-template-columns: repeat(2, minmax(0, 1fr));
+    grid-template-rows: none;
+    min-block-size: auto;
+    overflow: visible;
+    order: -1;
+    padding-inline-end: clamp(14px, 1.3vw, 22px);
+    padding-block-end: clamp(10px, 1.2vh, 18px);
+  }
+
+  .listCard {
+    min-block-size: auto;
+  }
+
+  .scrollArea {
+    block-size: auto;
+    overflow: visible;
+    padding-inline-end: 0;
+  }
+
+  .avatar {
+    --avatar-size: clamp(118px, 24vw, 170px);
+  }
+}
+
+@media (max-width: 760px) {
+  .leaderboard {
+    --leaderboard-shell-radius: 34px;
+    --leaderboard-card-radius: 30px;
+    --leaderboard-panel-radius: 30px;
+    padding-inline: clamp(8px, 2.6vw, 14px);
+  }
+
+  .darkContainer {
+    border-radius: 28px;
+    padding: clamp(12px, 2.6vw, 16px);
+  }
+
+  .listCard {
+    padding: clamp(16px, 3.8vw, 24px);
+  }
+
+  .sidebar {
     grid-template-columns: 1fr;
+  }
+
+  .row {
+    gap: clamp(6px, 1.8vw, 10px);
+    grid-template-columns: auto minmax(0, 1fr) auto;
+    min-block-size: clamp(46px, 6vh, 58px);
+    padding: clamp(8px, 1vh, 10px) clamp(10px, 2.6vw, 14px);
+  }
+
+  .rowRank,
+  .rowName,
+  .rowElo {
+    font-size: clamp(14px, 4.6vw, 21px);
+  }
+
+  .rowName {
+    gap: clamp(4px, 1vw, 8px);
+  }
+
+  .rowElo {
+    text-align: right;
+  }
+
+  .cardTitle,
+  .cardSubtitle,
+  .cardAccent {
+    font-size: clamp(22px, 8vw, 34px);
   }
 }

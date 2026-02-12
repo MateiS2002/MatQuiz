@@ -6,8 +6,8 @@
   --size-h2: clamp(44px, 6.9vw, 100px);
   --size-h3: clamp(30px, 3vw, 45px);
   --size-body: clamp(25px, 3vw, 35px);
-  --navbar-height: clamp(120px, 16vw, 187px);
-  --navbar-gap: clamp(12px, 3vw, 25px);
+  --navbar-height: 9vh;
+  --navbar-gap: 2vh;
 }
 
 html {

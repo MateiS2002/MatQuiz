@@ -808,18 +808,19 @@ const Lobby = () => {
     revealElapsed >= MANUAL_NEXT_FALLBACK_SECONDS &&
     isRoomPlaying &&
     !isRequestingQuestion
+  const isHostSetupView = !isRuntimeView && isHost
 
   return (
     <div className={styles.lobby}>
       <div
         className={`${styles.darkContainer} ${
           isRuntimeView ? styles.darkContainerGameFlow : ""
-        }`}
+        } ${isHostSetupView ? styles.darkContainerHostSetup : ""}`}
       >
         <div
           className={`${styles.panel} ${isRuntimeView ? styles.panelGameFlow : ""} ${
             stage === "RESULTS" ? styles.panelGameFlowResults : ""
-          }`}
+          } ${isHostSetupView ? styles.panelHostSetup : ""}`}
         >
           {isRuntimeView ? (
             <LobbyRuntimeView

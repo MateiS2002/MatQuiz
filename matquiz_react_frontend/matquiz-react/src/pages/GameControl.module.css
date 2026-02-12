@@ -1,96 +1,151 @@
 .gameControl {
+  --game-shell-max-width: 1523px;
+  --game-shell-radius: 47px;
+  --game-card-radius: 37px;
+  --game-panel-radius: 37px;
+  --game-shell-bg: rgba(33, 33, 33, 0.75);
+  --game-surface: #56018c;
+  --game-input-bg: #6a00ac;
+  --game-border: #ffffff;
+  --game-text: #ffffff;
+  --game-title-accent: #d39506;
+  --game-shell-inline: clamp(10px, 2.8vw, 26px);
+  --game-control-height: clamp(52px, 7vh, 72px);
+  --game-control-font: clamp(20px, 2.1vw, 32px);
   align-items: center;
   display: flex;
   justify-content: center;
-  min-height: calc(100vh - var(--navbar-height) - var(--navbar-gap));
-  padding: clamp(16px, 4vw, 32px);
+  block-size: 88vh;
+  block-size: 88dvh;
+  padding: 0 var(--game-shell-inline);
 }
 
 .darkContainer {
-  background: rgba(33, 33, 33, 0.75);
-  border-radius: 47px;
-  box-shadow: 0 18px 40px rgba(0, 0, 0, 0.4);
-  min-height: min(778px, 82vh);
-  padding: clamp(20px, 4vw, 42px) clamp(20px, 4vw, 46px);
-  width: min(1523px, 94vw);
+  backdrop-filter: blur(6.65px);
+  -webkit-backdrop-filter: blur(6.65px);
+  background: var(--game-shell-bg);
+  border-radius: var(--game-shell-radius);
+  box-shadow: 0 18px 40px rgba(0, 0, 0, 0.35);
+  display: flex;
+  flex-direction: column;
+  inline-size: min(100%, var(--game-shell-max-width));
+  block-size: 87vh;
+  block-size: 87dvh;
+  margin-block-end: 1vh;
+  overflow: hidden;
+  padding: clamp(18px, 2.8vw, 32px);
 }
 
-.panel {
-  background: rgba(86, 1, 140, 1);
+.content {
+  display: grid;
+  flex: 1 1 auto;
+  gap: clamp(16px, 1.8vw, 30px);
+  grid-template-columns: minmax(0, 1fr) minmax(300px, 400px);
+  min-block-size: 0;
+}
+
+.exitButton {
+  align-items: center;
+  align-self: stretch;
+  background: var(--game-input-bg);
+  border: 2px solid var(--game-title-accent);
   border-radius: 37px;
-  box-shadow: 0 16px 32px rgba(0, 0, 0, 0.35);
-  min-height: min(620px, 70vh);
-  padding: clamp(24px, 4vw, 56px);
+  box-shadow: inset 5px 3px 5.8px 3px rgba(0, 0, 0, 0.25);
+  color: var(--game-title-accent);
+  cursor: pointer;
+  display: inline-flex;
+  font-size: var(--game-control-font);
+  justify-content: center;
+  line-height: 1.05;
+  margin-top: auto;
+  min-block-size: var(--game-control-height);
+  padding: clamp(8px, 1vh, 12px) clamp(16px, 1.8vw, 30px);
+  inline-size: 100%;
 }
 
-.backButton {
-  background: transparent;
-  border: 2px solid #d39506;
-  border-radius: 999px;
-  color: #d39506;
-  cursor: pointer;
-  font-size: clamp(18px, 3vw, 28px);
-  padding: 10px clamp(22px, 4vw, 36px);
+.mainCard {
+  align-content: stretch;
+  background: var(--game-surface);
+  border-radius: var(--game-card-radius);
+  box-shadow: 10px 9px 6.5px rgba(0, 0, 0, 0.25);
+  display: flex;
+  flex-direction: column;
+  gap: clamp(16px, 2vh, 26px);
+  min-block-size: 0;
+  overflow-y: auto;
+  overscroll-behavior: contain;
+  padding: clamp(24px, 2.8vh, 40px) clamp(24px, 2.6vw, 44px);
+  scrollbar-gutter: stable;
 }
 
 .centerContent {
-  align-items: center;
+  align-content: space-evenly;
+  block-size: 100%;
   display: grid;
-  gap: clamp(22px, 4vw, 42px);
+  flex: 1 1 auto;
+  gap: clamp(14px, 1.8vh, 24px);
   justify-items: center;
-  margin-top: clamp(60px, 10vh, 140px);
+  min-block-size: 0;
+  padding-block: clamp(10px, 1.3vh, 20px);
 }
 
 .mainText {
-  color: #ffffff;
-  font-size: clamp(34px, 5vw, 66px);
+  color: var(--game-text);
+  font-size: clamp(40px, 4.9vw, 74px);
+  line-height: 1.05;
   margin: 0;
   text-align: center;
 }
 
 .actionsRow {
   display: grid;
-  gap: clamp(16px, 3vw, 24px);
+  gap: clamp(16px, 2vw, 28px);
   grid-template-columns: repeat(2, minmax(0, 1fr));
-  max-width: 900px;
+  inline-size: min(100%, 980px);
+}
+
+.actionsColumn {
+  display: grid;
+  gap: clamp(12px, 1.6vh, 20px);
+  inline-size: min(100%, 600px);
+}
+
+.actionButton,
+.reconnectButton,
+.leaveButton {
+  align-items: center;
+  background: var(--game-input-bg);
+  border: 2px solid rgba(255, 255, 255, 0.9);
+  border-radius: 37px;
+  box-shadow: inset 5px 3px 5.8px 3px rgba(0, 0, 0, 0.25);
+  color: var(--game-text);
+  cursor: pointer;
+  display: inline-flex;
+  font-size: var(--game-control-font);
+  justify-content: center;
+  line-height: 1.05;
+  min-block-size: var(--game-control-height);
+  padding: clamp(8px, 1vh, 12px) clamp(16px, 1.8vw, 30px);
+  text-align: center;
+  text-decoration: none;
   width: 100%;
 }
 
-.actionButton {
-  background: transparent;
-  border: 2px solid rgba(255, 255, 255, 0.9);
-  border-radius: 999px;
-  color: #ffffff;
-  cursor: pointer;
-  font-size: clamp(30px, 4.4vw, 56px);
-  padding: clamp(14px, 2.4vw, 20px);
-}
-
 .primaryButton {
-  background: rgba(211, 149, 6, 1);
-  border-color: rgba(211, 149, 6, 1);
+  background: var(--game-title-accent);
+  border-color: var(--game-title-accent);
 }
 
 .reconnectButton {
-  background: transparent;
-  border: 2px solid rgba(255, 255, 255, 0.9);
-  border-radius: 999px;
-  color: #ffffff;
-  cursor: pointer;
-  font-size: clamp(34px, 5vw, 60px);
-  max-width: 520px;
-  padding: clamp(14px, 2.4vw, 20px) clamp(32px, 5vw, 54px);
-  width: min(78vw, 520px);
+  font-size: var(--game-control-font);
+  min-block-size: var(--game-control-height);
 }
 
 .leaveButton {
-  background: transparent;
-  border: 2px solid #d39506;
-  border-radius: 999px;
-  color: #d39506;
-  cursor: pointer;
-  font-size: clamp(24px, 3.2vw, 36px);
-  padding: clamp(10px, 2vw, 14px) clamp(24px, 3vw, 44px);
+  border-color: var(--game-title-accent);
+  color: var(--game-title-accent);
+  font-size: var(--game-control-font);
+  min-block-size: var(--game-control-height);
 }
 
 .leaveButton:disabled {
@@ -99,14 +154,15 @@
 }
 
 .roomHint {
-  color: rgba(255, 255, 255, 0.8);
-  font-size: clamp(20px, 3vw, 28px);
+  color: rgba(255, 255, 255, 0.82);
+  font-size: clamp(22px, 2.3vw, 34px);
+  line-height: 1.1;
   margin: 0;
 }
 
 .errorText {
   color: #ffb5b5;
-  font-size: clamp(16px, 2.4vw, 24px);
+  font-size: clamp(16px, 1.6vw, 24px);
   margin: 0;
   text-align: center;
 }
@@ -115,8 +171,111 @@
   animation: loading 1.4s ease-in-out infinite;
   background: linear-gradient(90deg, #ffffff 0%, rgba(255, 255, 255, 0.3) 100%);
   border-radius: 999px;
-  height: clamp(10px, 1.6vw, 14px);
-  width: min(440px, 80vw);
+  block-size: clamp(10px, 1.2vw, 14px);
+  inline-size: min(440px, 80vw);
+}
+
+.sidebar {
+  block-size: 100%;
+  display: flex;
+  flex-direction: column;
+  gap: clamp(16px, 2vh, 24px);
+  min-block-size: 0;
+  overflow-y: auto;
+  padding-inline-end: clamp(18px, 1.8vw, 28px);
+  padding-block-end: clamp(16px, 2vh, 30px);
+}
+
+.userCard {
+  background: var(--game-surface);
+  border-radius: var(--game-panel-radius);
+  box-shadow: 10px 9px 6.5px rgba(0, 0, 0, 0.25);
+  display: grid;
+  gap: clamp(8px, 1.1vh, 14px);
+  justify-items: center;
+  padding: clamp(18px, 2.4vh, 28px) clamp(12px, 1.5vw, 20px);
+  text-align: center;
+}
+
+.avatar {
+  --game-avatar-size: clamp(120px, 12vw, 170px);
+  border-radius: 50%;
+  margin: clamp(6px, 1vh, 12px) auto;
+  overflow: hidden;
+  inline-size: var(--game-avatar-size);
+  block-size: var(--game-avatar-size);
+}
+
+.avatarImage {
+  block-size: 100%;
+  display: block;
+  inline-size: 100%;
+  object-fit: cover;
+}
+
+.cardTitle {
+  color: var(--game-title-accent);
+  font-size: clamp(24px, 2.5vw, 45px);
+  line-height: 1;
+  margin: 0;
+}
+
+.cardSubtitle {
+  color: var(--game-text);
+  font-size: clamp(24px, 2.45vw, 45px);
+  line-height: 1.1;
+  margin: 0;
+}
+
+.content,
+.mainCard,
+.sidebar {
+  scrollbar-color: #ffffff transparent;
+  scrollbar-width: thin;
+}
+
+.content::-webkit-scrollbar,
+.mainCard::-webkit-scrollbar,
+.sidebar::-webkit-scrollbar {
+  inline-size: 8px;
+}
+
+.content::-webkit-scrollbar-track,
+.mainCard::-webkit-scrollbar-track,
+.sidebar::-webkit-scrollbar-track {
+  background: transparent;
+}
+
+.content::-webkit-scrollbar-thumb,
+.mainCard::-webkit-scrollbar-thumb,
+.sidebar::-webkit-scrollbar-thumb {
+  background: #ffffff;
+  border-radius: 999px;
+}
+
+.actionButton:hover,
+.reconnectButton:hover,
+.leaveButton:hover,
+.exitButton:hover {
+  box-shadow: 0 10px 20px rgba(0, 0, 0, 0.24);
+  transform: translateY(-1px);
+}
+
+.actionButton:disabled,
+.reconnectButton:disabled,
+.leaveButton:disabled,
+.exitButton:disabled {
+  cursor: not-allowed;
+  opacity: 0.6;
+  transform: none;
+}
+
+.actionButton:focus-visible,
+.reconnectButton:focus-visible,
+.leaveButton:focus-visible,
+.exitButton:focus-visible {
+  outline: 2px solid var(--game-border);
+  outline-offset: 2px;
 }
 
 @keyframes loading {
@@ -134,8 +293,99 @@
   }
 }
 
-@media (max-width: 900px) {
+@media (max-width: 1200px) {
+  .darkContainer {
+    min-block-size: 0;
+    overflow: hidden;
+  }
+
+  .content {
+    block-size: 100%;
+    display: flex;
+    flex-direction: column;
+    justify-content: space-between;
+    min-block-size: 0;
+    overflow-y: auto;
+    overscroll-behavior: contain;
+    padding-inline-start: clamp(8px, 0.8vw, 14px);
+    padding-inline-end: clamp(18px, 1.8vw, 28px);
+    padding-block-start: clamp(2px, 0.3vh, 6px);
+    padding-block-end: clamp(14px, 1.6vh, 24px);
+    scrollbar-gutter: stable both-edges;
+  }
+
+  .sidebar {
+    block-size: auto;
+    display: flex;
+    flex: 1 1 auto;
+    flex-direction: column;
+    justify-content: space-between;
+    inline-size: 100%;
+    min-block-size: auto;
+    order: 2;
+    overflow: visible;
+    padding-inline-end: 0;
+    padding-block-end: clamp(10px, 1.2vh, 18px);
+  }
+
+  .mainCard {
+    block-size: auto;
+    flex: 0 0 auto;
+    inline-size: 100%;
+    order: 1;
+    overflow: hidden;
+  }
+
+  .exitButton {
+    margin-top: clamp(12px, 1.6vh, 22px);
+  }
+
+  .avatar {
+    --game-avatar-size: clamp(118px, 24vw, 170px);
+  }
+}
+
+@media (max-width: 760px) {
+  .gameControl {
+    --game-shell-radius: 34px;
+    --game-card-radius: 30px;
+    --game-panel-radius: 30px;
+    --game-control-height: clamp(48px, 7vh, 62px);
+    --game-control-font: clamp(18px, 6vw, 26px);
+    padding-inline: clamp(8px, 2.6vw, 14px);
+  }
+
+  .darkContainer {
+    border-radius: 28px;
+    padding: clamp(12px, 2.6vw, 16px);
+  }
+
+  .mainCard {
+    padding: clamp(16px, 3.8vw, 24px);
+  }
+
+  .mainText {
+    font-size: clamp(30px, 8.5vw, 46px);
+  }
+
   .actionsRow {
     grid-template-columns: 1fr;
+  }
+
+  .actionButton,
+  .reconnectButton,
+  .leaveButton {
+    font-size: var(--game-control-font);
+    min-block-size: var(--game-control-height);
+  }
+
+  .exitButton {
+    font-size: var(--game-control-font);
+    margin-top: clamp(10px, 1.4vh, 18px);
+  }
+
+  .cardTitle,
+  .cardSubtitle {
+    font-size: clamp(22px, 8vw, 34px);
   }
 }

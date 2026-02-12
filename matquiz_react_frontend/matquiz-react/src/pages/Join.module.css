@@ -1,88 +1,123 @@
 .join {
+  --join-shell-max-width: 1523px;
+  --join-shell-radius: 47px;
+  --join-card-radius: 37px;
+  --join-panel-radius: 37px;
+  --join-shell-bg: rgba(33, 33, 33, 0.75);
+  --join-surface: #56018c;
+  --join-input-bg: #6a00ac;
+  --join-border: #ffffff;
+  --join-text: #ffffff;
+  --join-muted-text: #c4c3c3;
+  --join-title-accent: #d39506;
+  --join-positive: #7dfb7d;
+  --join-shell-inline: clamp(10px, 2.8vw, 26px);
+  --join-control-height: clamp(54px, 8vh, 81px);
+  --join-input-size: clamp(20px, 2.3vw, 40px);
   align-items: center;
   display: flex;
   justify-content: center;
-  min-height: calc(100vh - var(--navbar-height) - var(--navbar-gap));
-  padding: clamp(16px, 4vw, 32px);
+  block-size: 88vh;
+  block-size: 88dvh;
+  padding: 0 var(--join-shell-inline);
 }
 
 .darkContainer {
-  background: rgba(33, 33, 33, 0.75);
-  border-radius: 47px;
-  box-shadow: 0 18px 40px rgba(0, 0, 0, 0.4);
-  min-height: min(778px, 82vh);
-  padding: clamp(20px, 4vw, 42px) clamp(20px, 4vw, 46px);
-  width: min(1523px, 94vw);
+  backdrop-filter: blur(6.65px);
+  -webkit-backdrop-filter: blur(6.65px);
+  background: var(--join-shell-bg);
+  border-radius: var(--join-shell-radius);
+  box-shadow: 0 18px 40px rgba(0, 0, 0, 0.35);
+  inline-size: min(100%, var(--join-shell-max-width));
+  block-size: 87vh;
+  block-size: 87dvh;
+  margin-block-end: 1vh;
+  overflow: hidden;
+  padding: clamp(18px, 2.8vw, 32px);
 }
 
 .content {
+  block-size: 100%;
   display: grid;
-  gap: clamp(24px, 4vw, 40px);
-  grid-template-columns: minmax(0, 1fr) minmax(0, 320px);
+  gap: clamp(16px, 1.8vw, 30px);
+  grid-template-columns: minmax(0, 1fr) minmax(300px, 400px);
+  min-block-size: 0;
 }
 
 .formCard {
-  background: rgba(86, 1, 140, 1);
-  border-radius: 37px;
-  box-shadow: 0 16px 32px rgba(0, 0, 0, 0.35);
-  min-height: min(576px, 66vh);
-  padding: clamp(24px, 4vw, 54px);
+  background: var(--join-surface);
+  border-radius: var(--join-card-radius);
+  box-shadow: 10px 9px 6.5px rgba(0, 0, 0, 0.25);
+  display: grid;
+  min-block-size: 0;
+  overflow-y: auto;
+  overscroll-behavior: contain;
+  padding: clamp(24px, 2.8vh, 42px) clamp(20px, 2.6vw, 44px);
+  scrollbar-gutter: stable;
 }
 
 .title {
-  color: #d39506;
-  font-size: clamp(30px, 4vw, 48px);
-  margin: 0 0 clamp(18px, 3vw, 32px);
+  color: var(--join-title-accent);
+  font-size: clamp(30px, 3.1vw, 48px);
+  margin: 0 0 clamp(14px, 1.8vh, 24px);
   text-align: center;
 }
 
 .form {
+  align-content: start;
   display: grid;
-  gap: clamp(18px, 3vw, 28px);
+  gap: clamp(14px, 1.8vh, 24px);
+  min-block-size: 0;
 }
 
 .label {
-  color: #ffffff;
-  font-size: clamp(22px, 3vw, 32px);
+  color: var(--join-text);
+  font-size: clamp(22px, 2.35vw, 40px);
+  line-height: 1.1;
 }
 
 .input {
-  background: #6a00ac;
-  border: 2px solid #ffffff;
-  border-radius: 28px;
-  color: #c4c3c3;
-  font-size: clamp(20px, 3vw, 30px);
-  height: clamp(68px, 8vw, 86px);
-  letter-spacing: 0.08em;
-  padding: 0 clamp(20px, 4vw, 28px);
+  appearance: none;
+  background: var(--join-input-bg);
+  border: 2px solid var(--join-border);
+  border-radius: 37px;
+  box-shadow: inset 5px 3px 5.8px 3px rgba(0, 0, 0, 0.25);
+  color: var(--join-muted-text);
+  font-size: var(--join-input-size);
+  inline-size: 100%;
+  line-height: 1.05;
+  min-block-size: var(--join-control-height);
+  padding: clamp(8px, 1.2vh, 13px) clamp(18px, 2.3vw, 44px);
   text-transform: uppercase;
 }
 
-.pinHint {
-  color: rgba(255, 255, 255, 0.75);
-  font-size: clamp(14px, 2vw, 20px);
-  margin: calc(clamp(18px, 3vw, 28px) * -0.45) 0 0;
+.input::placeholder {
+  color: var(--join-muted-text);
+  opacity: 1;
 }
 
 .note {
-  color: #ffffff;
-  font-size: clamp(20px, 3vw, 30px);
+  color: var(--join-text);
+  font-size: clamp(20px, 2.2vw, 32px);
+  line-height: 1.2;
+  margin: 0;
   text-align: center;
 }
 
 .joinButton {
   align-self: center;
-  background: #5f00a0;
-  border: 2px solid #d39506;
-  border-radius: 999px;
-  color: #d39506;
+  background: var(--join-input-bg);
+  border: 2px solid var(--join-title-accent);
+  border-radius: 37px;
+  box-shadow: inset 5px 3px 5.8px 3px rgba(0, 0, 0, 0.25);
+  color: var(--join-title-accent);
   cursor: pointer;
-  font-size: clamp(22px, 3vw, 32px);
-  height: clamp(64px, 8vw, 84px);
+  font-size: var(--join-input-size);
+  inline-size: min(420px, 100%);
   justify-self: center;
-  margin: 70px auto;
-  padding: 0 clamp(28px, 6vw, 56px);
-  width: min(420px, 80%);
+  line-height: 1.05;
+  min-block-size: var(--join-control-height);
+  padding: clamp(8px, 1.2vh, 13px) clamp(20px, 2.6vw, 44px);
 }
 
 .joinButton:disabled {
@@ -91,55 +126,168 @@
 }
 
 .sidebar {
-  display: grid;
-  gap: clamp(18px, 3vw, 24px);
   align-content: start;
+  display: grid;
+  gap: clamp(16px, 2vh, 24px);
+  grid-template-rows: repeat(2, minmax(0, 1fr));
+  block-size: 100%;
+  min-block-size: 0;
+  overflow-y: auto;
+  padding-inline-end: clamp(18px, 1.8vw, 28px);
+  padding-block-end: clamp(10px, 1.2vh, 18px);
 }
 
 .userCard,
 .statsCard {
-  background: rgba(86, 1, 140, 1);
-  border-radius: 28px;
-  box-shadow: 0 12px 26px rgba(0, 0, 0, 0.35);
-  padding: clamp(20px, 3vw, 28px);
+  background: var(--join-surface);
+  border-radius: var(--join-panel-radius);
+  box-shadow: 10px 9px 6.5px rgba(0, 0, 0, 0.25);
+  display: grid;
+  justify-items: center;
+  min-block-size: 0;
+  padding: clamp(18px, 2.4vh, 28px) clamp(12px, 1.5vw, 20px);
   text-align: center;
+}
+
+.userCard {
+  align-content: start;
+  gap: clamp(8px, 1.1vh, 14px);
+}
+
+.statsCard {
+  align-content: center;
+  gap: clamp(8px, 1.2vh, 16px);
 }
 
 .avatar {
   background: rgba(255, 255, 255, 0.15);
   border-radius: 50%;
-  height: clamp(120px, 18vw, 160px);
-  margin: 16px auto;
+  block-size: clamp(100px, 10vw, 150px);
+  inline-size: clamp(120px, 12vw, 170px);
+  margin: clamp(6px, 1vh, 12px) auto;
   overflow: hidden;
-  width: clamp(120px, 18vw, 160px);
 }
 
 .avatarImage {
-  height: 100%;
+  block-size: 100%;
+  display: block;
+  inline-size: 100%;
   object-fit: cover;
-  width: 100%;
 }
 
 .cardTitle {
-  color: #d39506;
-  font-size: clamp(22px, 3vw, 32px);
+  color: var(--join-title-accent);
+  font-size: clamp(24px, 2.5vw, 45px);
+  line-height: 1;
   margin: 0;
 }
 
 .cardSubtitle {
-  color: #ffffff;
-  font-size: clamp(20px, 3vw, 30px);
-  margin: 12px 0 0;
+  color: var(--join-text);
+  font-size: clamp(24px, 2.45vw, 45px);
+  line-height: 1.1;
+  margin: 0;
 }
 
 .cardAccent {
-  color: #7dfb7d;
-  font-size: clamp(22px, 3vw, 32px);
-  margin: 10px 0 0;
+  color: var(--join-positive);
+  font-size: clamp(24px, 2.45vw, 45px);
+  line-height: 1;
+  margin: 0;
 }
 
-@media (max-width: 900px) {
+.content,
+.formCard,
+.sidebar {
+  scrollbar-color: #ffffff transparent;
+  scrollbar-width: thin;
+}
+
+.content::-webkit-scrollbar,
+.formCard::-webkit-scrollbar,
+.sidebar::-webkit-scrollbar {
+  inline-size: 8px;
+}
+
+.content::-webkit-scrollbar-track,
+.formCard::-webkit-scrollbar-track,
+.sidebar::-webkit-scrollbar-track {
+  background: transparent;
+}
+
+.content::-webkit-scrollbar-thumb,
+.formCard::-webkit-scrollbar-thumb,
+.sidebar::-webkit-scrollbar-thumb {
+  background: #ffffff;
+  border-radius: 999px;
+}
+
+@media (max-width: 1200px) {
+  .darkContainer {
+    min-block-size: 0;
+    overflow: hidden;
+  }
+
   .content {
-    grid-template-columns: 1fr;
+    block-size: 100%;
+    display: flex;
+    flex-direction: column;
+    min-block-size: 0;
+    overflow-y: auto;
+    overscroll-behavior: contain;
+    padding-inline-start: clamp(8px, 0.8vw, 14px);
+    padding-inline-end: clamp(18px, 1.8vw, 28px);
+    padding-block-start: clamp(2px, 0.3vh, 6px);
+    padding-block-end: clamp(14px, 1.6vh, 24px);
+    scrollbar-gutter: stable both-edges;
+  }
+
+  .sidebar {
+    grid-template-rows: none;
+    min-block-size: auto;
+    order: -1;
+    overflow: visible;
+    padding-inline-end: clamp(14px, 1.3vw, 22px);
+    padding-block-end: clamp(10px, 1.2vh, 18px);
+  }
+
+  .formCard {
+    block-size: auto;
+    flex: 0 0 auto;
+    overflow: hidden;
+  }
+}
+
+@media (max-width: 760px) {
+  .join {
+    --join-shell-radius: 34px;
+    --join-card-radius: 30px;
+    --join-panel-radius: 30px;
+    --join-control-height: clamp(48px, 7vh, 62px);
+    --join-input-size: clamp(18px, 6vw, 26px);
+    padding-inline: clamp(8px, 2.6vw, 14px);
+  }
+
+  .darkContainer {
+    border-radius: 28px;
+    padding: clamp(12px, 2.6vw, 16px);
+  }
+
+  .formCard {
+    padding: clamp(16px, 3.8vw, 24px);
+  }
+
+  .title {
+    font-size: clamp(28px, 7.6vw, 40px);
+  }
+
+  .note {
+    font-size: clamp(18px, 5.3vw, 26px);
+  }
+
+  .cardTitle,
+  .cardSubtitle,
+  .cardAccent {
+    font-size: clamp(22px, 8vw, 34px);
   }
 }

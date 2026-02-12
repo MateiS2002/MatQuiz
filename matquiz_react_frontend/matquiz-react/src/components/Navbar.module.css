@@ -1,7 +1,9 @@
 .navbar {
+  align-items: center;
+  block-size: 12vh;
   display: flex;
   justify-content: center;
-  padding: clamp(8px, 1.4vw, 18px) clamp(12px, 3vw, 25px) 0;
+  padding: 1vh clamp(12px, 3vw, 25px) 2vh;
   position: relative;
 }
 
@@ -14,7 +16,7 @@
   box-shadow: 0 18px 40px rgba(0, 0, 0, 0.35);
   display: flex;
   gap: clamp(8px, 0.8vw, 14px);
-  height: clamp(64px, 4.8vw, 82px);
+  block-size: 100%;
   max-width: 1523px;
   padding: 0 clamp(14px, 1.5vw, 24px);
   width: min(1523px, 94vw);
@@ -23,7 +25,6 @@
 .logo {
   display: inline-flex;
   align-items: center;
-  margin-top: 4px;
 }
 
 .logoButton {
@@ -112,7 +113,6 @@
   color: #f7f3ff;
   cursor: pointer;
   margin-right: 16px;
-  margin-top: 4px;
   font-size: clamp(30px, 2.8vw, 40px);
   letter-spacing: 1px;
   text-decoration: none;
@@ -148,11 +148,6 @@
   background: rgba(255, 255, 255, 0.12);
 }
 
-.menu {
-  position: relative;
-}
-
-
 .menuDropdown {
   background: rgba(33, 33, 33, 0.42);
   backdrop-filter: blur(24px);
@@ -171,10 +166,27 @@
     calc(100vh - 24px),
     var(--menu-dropdown-max-height, calc(100vh - 24px))
   );
-  overflow-y: auto;
+  overflow: hidden;
   overscroll-behavior: contain;
-  padding: clamp(18px, 3vw, 28px);
+  padding-block: clamp(18px, 3vw, 28px);
+  padding-inline: 0;
   width: min(544px, calc(100vw - 24px));
+}
+
+.menuDropdown::-webkit-scrollbar,
+.menuList::-webkit-scrollbar {
+  width: 8px;
+}
+
+.menuDropdown::-webkit-scrollbar-track,
+.menuList::-webkit-scrollbar-track {
+  background: transparent;
+}
+
+.menuDropdown::-webkit-scrollbar-thumb,
+.menuList::-webkit-scrollbar-thumb {
+  background: #ffffff;
+  border-radius: 999px;
 }
 
 .dropdownItem {
@@ -204,7 +216,16 @@
 
 .menuList {
   display: grid;
+  flex: 1 1 auto;
   gap: clamp(10px, 2.2vw, 18px);
+  min-height: 0;
+  overflow-y: auto;
+  margin-inline-start: 6px;
+  margin-inline-end: 12px;
+  padding-inline: 0;
+  scrollbar-color: #ffffff transparent;
+  scrollbar-gutter: stable;
+  scrollbar-width: thin;
 }
 
 .menuClose {
@@ -225,14 +246,13 @@
 
 @media (max-width: 900px) {
   .navbar {
-    padding: clamp(6px, 2.2vw, 10px) clamp(8px, 2.8vw, 12px) 0;
+    padding: 1vh clamp(8px, 2.8vw, 12px) 2vh;
   }
 
   .inner {
     backdrop-filter: blur(18px);
     -webkit-backdrop-filter: blur(18px);
     border-radius: 34px;
-    height: clamp(56px, 14vw, 68px);
     padding: 0 clamp(8px, 2.3vw, 14px);
     width: 100%;
   }
@@ -253,7 +273,6 @@
 
   .menuDropdown {
     align-items: stretch;
-    justify-items: center;
     background: rgba(33, 33, 33, 0.58);
     backdrop-filter: blur(34px) saturate(125%);
     -webkit-backdrop-filter: blur(34px) saturate(125%);
@@ -264,17 +283,18 @@
     display: grid;
     grid-template-rows: minmax(0, 1fr) auto;
     height: 100vh;
+    height: 100dvh;
     inset: 0;
-    justify-content: stretch;
-    margin: 0;
+    justify-items: center;
+    max-width: none;
+    max-height: none;
     overflow: hidden;
     overscroll-behavior: contain;
     padding: max(10px, env(safe-area-inset-top)) 0
       max(10px, env(safe-area-inset-bottom));
     position: fixed;
-    transform: none;
-    width: auto;
-    max-width: none;
+    width: 100vw;
+    width: 100dvw;
     z-index: 1000;
   }
 
@@ -282,14 +302,20 @@
     align-content: center;
     gap: clamp(14px, 3vw, 22px);
     overflow-y: auto;
-    padding: clamp(22px, 4vw, 34px) clamp(18px, 5vw, 30px);
+    padding-block: clamp(22px, 4vw, 34px);
+    margin-inline-start: 6px;
+    margin-inline-end: 12px;
+    padding-inline: 0;
+    scrollbar-color: #ffffff transparent;
+    scrollbar-width: thin;
     scrollbar-gutter: stable;
-    width: min(544px, 100%);
+    width: auto;
+    max-width: none;
   }
 
   .menuClose {
     margin-top: clamp(12px, 3vw, 20px);
-    margin-bottom: max(8px, env(safe-area-inset-bottom));
+    margin-bottom: 0;
   }
 }
 

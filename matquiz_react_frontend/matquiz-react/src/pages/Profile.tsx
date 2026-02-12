@@ -1,10 +1,4 @@
-import {
-  useCallback,
-  useEffect,
-  useRef,
-  useState,
-  type CSSProperties,
-} from "react"
+import { useEffect, useState } from "react"
 import {
   useChangeEmailMutation,
   useChangePasswordMutation,
@@ -40,8 +34,6 @@ const parseApiError = (value: unknown) => {
 }
 
 const Profile = () => {
-  const profileRef = useRef<HTMLDivElement | null>(null)
-  const darkContainerRef = useRef<HTMLDivElement | null>(null)
   const { data: user } = useGetSessionQuery(undefined)
   const [changeUsername, { isLoading: isChangingUsername }] =
     useChangeUsernameMutation()
@@ -52,10 +44,6 @@ const Profile = () => {
     useSetProfilePictureMutation()
 
   const [isAvatarModalOpen, setIsAvatarModalOpen] = useState(false)
-  const [profileAvailableHeight, setProfileAvailableHeight] = useState(() =>
-    typeof window === "undefined" ? 900 : window.innerHeight,
-  )
-  const [profileContentScale, setProfileContentScale] = useState(1)
   const [selectedAvatarUrl, setSelectedAvatarUrl] = useState(AVATAR_OPTIONS[0])
   const [avatarModalError, setAvatarModalError] = useState<string | null>(null)
   const [usernameDraft, setUsernameDraft] = useState("")
@@ -194,89 +182,9 @@ const Profile = () => {
       })
   }
 
-  const syncProfileViewport = useCallback(() => {
-    if (!profileRef.current || !darkContainerRef.current) {
-      return
-    }
-    const profileRect = profileRef.current.getBoundingClientRect()
-    const availableHeight = window.innerHeight - profileRect.top - 12
-    const boundedHeight = Math.max(1, Math.floor(availableHeight))
-    setProfileAvailableHeight(boundedHeight)
-
-    const profileStyles = window.getComputedStyle(profileRef.current)
-    const paddingTop = Number.parseFloat(profileStyles.paddingTop) || 0
-    const paddingBottom = Number.parseFloat(profileStyles.paddingBottom) || 0
-    const paddingLeft = Number.parseFloat(profileStyles.paddingLeft) || 0
-    const paddingRight = Number.parseFloat(profileStyles.paddingRight) || 0
-    const safeHeight = Math.max(1, boundedHeight - paddingTop - paddingBottom)
-    const safeWidth = Math.max(
-      1,
-      Math.floor(profileRect.width - paddingLeft - paddingRight),
-    )
-
-    const contentHeight = Math.max(1, darkContainerRef.current.scrollHeight)
-    const contentWidth = Math.max(1, darkContainerRef.current.scrollWidth)
-    const nextScale = Math.min(
-      1,
-      safeHeight / contentHeight,
-      safeWidth / contentWidth,
-    )
-    setProfileContentScale(Math.max(0.55, nextScale))
-  }, [])
-
-  useEffect(() => {
-    syncProfileViewport()
-    const handleResize = () => {
-      syncProfileViewport()
-    }
-
-    window.addEventListener("resize", handleResize)
-    window.visualViewport?.addEventListener("resize", handleResize)
-    return () => {
-      window.removeEventListener("resize", handleResize)
-      window.visualViewport?.removeEventListener("resize", handleResize)
-    }
-  }, [syncProfileViewport])
-
-  useEffect(() => {
-    if (!profileRef.current || !darkContainerRef.current) {
-      return
-    }
-
-    if (typeof ResizeObserver === "undefined") {
-      return
-    }
-
-    const observer = new ResizeObserver(() => {
-      syncProfileViewport()
-    })
-
-    observer.observe(profileRef.current)
-    observer.observe(darkContainerRef.current)
-    return () => {
-      observer.disconnect()
-    }
-  }, [syncProfileViewport])
-
   return (
-    <div
-      ref={profileRef}
-      className={styles.profile}
-      style={
-        {
-          "--profile-available-height": `${String(profileAvailableHeight)}px`,
-        } as CSSProperties
-      }
-    >
-      <div
-        ref={darkContainerRef}
-        className={styles.darkContainer}
-        style={
-          {
-            "--profile-content-scale": String(profileContentScale),
-          } as CSSProperties
-        }
-      >
+    <div className={styles.profile}>
+      <div className={styles.darkContainer}>
         <div className={styles.content}>
           <div className={styles.formCard}>
             <div className={styles.scrollArea}>

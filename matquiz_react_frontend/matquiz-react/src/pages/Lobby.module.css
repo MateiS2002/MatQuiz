@@ -1,35 +1,56 @@
 .lobby {
-  align-items: flex-start;
+  --lobby-shell-inline: clamp(10px, 2.8vw, 26px);
+  align-items: center;
   display: flex;
   justify-content: center;
-  min-height: calc(100vh - var(--navbar-height) - var(--navbar-gap));
-  min-height: calc(100dvh - var(--navbar-height) - var(--navbar-gap));
-  overflow-x: hidden;
-  overflow-y: auto;
-  padding: clamp(14px, 2.2vw, 24px) clamp(12px, 3vw, 28px)
-    clamp(16px, 2.6vw, 30px);
+  block-size: 88vh;
+  block-size: 88dvh;
+  padding: 0 var(--lobby-shell-inline);
 }
 
 .darkContainer {
+  backdrop-filter: blur(6.65px);
+  -webkit-backdrop-filter: blur(6.65px);
   background: rgba(33, 33, 33, 0.75);
   border-radius: 47px;
   box-shadow: 0 18px 40px rgba(0, 0, 0, 0.4);
-  min-height: min(778px, 82vh);
-  padding: clamp(20px, 4vw, 42px) clamp(20px, 4vw, 46px);
-  width: min(1523px, 100%);
+  block-size: 87vh;
+  block-size: 87dvh;
+  inline-size: min(1523px, 100%);
+  margin-block-end: 1vh;
+  overflow: hidden;
+  padding: clamp(18px, 2.8vw, 32px);
+  padding-block-end: clamp(24px, 3.4vw, 42px);
 }
 
 .darkContainerGameFlow {
   background: transparent;
   box-shadow: none;
-  min-height: min(922px, 86vh);
+  block-size: 87vh;
+  block-size: 87dvh;
+  min-height: 0;
   padding: 0;
-  width: min(1523px, 94vw);
+  width: min(1523px, 100%);
 }
 
 .panel {
   background: transparent;
+  block-size: 100%;
+  min-block-size: 0;
+  overflow-y: auto;
+  overscroll-behavior: contain;
   padding: clamp(22px, 3.6vw, 40px);
+  scrollbar-gutter: stable;
+}
+
+.darkContainerHostSetup {
+  overflow: hidden;
+}
+
+.panelHostSetup {
+  display: grid;
+  min-block-size: 0;
+  padding: 0px;
 }
 
 .panelGameFlow {
@@ -37,34 +58,38 @@
   backdrop-filter: blur(6.65px);
   border-radius: 47px;
   box-shadow: 0 18px 40px rgba(0, 0, 0, 0.4);
-  margin-right: clamp(84px, 6.6vw, 124px);
-  min-height: 100%;
-  overflow: visible;
+  block-size: 100%;
+  margin-right: 0;
+  min-height: 0;
+  overflow: hidden;
   padding: clamp(36px, 2.7vw, 45px) clamp(34px, 2.8vw, 54px)
     clamp(44px, 3.2vw, 57px) clamp(42px, 3.6vw, 70px);
 }
 
 .panelGameFlowResults {
+  block-size: 100%;
   margin-right: 0;
+  min-height: 0;
+  overflow-y: auto;
   padding: clamp(30px, 2.4vw, 44px) clamp(24px, 2.3vw, 46px)
     clamp(30px, 2.5vw, 44px);
 }
 
 .playerGrid {
   display: grid;
-  gap: clamp(18px, 3vw, 26px);
+  gap: clamp(14px, 2.2vw, 20px);
   grid-template-columns: repeat(3, minmax(0, 1fr));
   grid-template-rows: repeat(2, minmax(0, 1fr));
 }
 
-.card {
+.playerGrid .card {
   background: rgba(86, 1, 140, 1);
   border-radius: 28px;
   box-shadow: 0 12px 26px rgba(0, 0, 0, 0.35);
   display: grid;
-  gap: 12px;
+  gap: clamp(8px, 1vh, 12px);
   justify-items: center;
-  padding: clamp(18px, 3vw, 26px);
+  padding: clamp(14px, 2.2vw, 20px);
   text-align: center;
 }
 
@@ -72,18 +97,18 @@
   align-content: center;
 }
 
-.roomCode {
+.playerGrid .roomCode {
   color: #ffffff;
-  font-size: clamp(24px, 4vw, 36px);
+  font-size: clamp(22px, 3.2vw, 30px);
   margin: 0;
 }
 
-.spinner {
+.playerGrid .spinner {
   border: 8px solid rgba(255, 255, 255, 0.2);
   border-left-color: #ffffff;
   border-radius: 50%;
-  height: clamp(90px, 14vw, 130px);
-  width: clamp(90px, 14vw, 130px);
+  height: clamp(76px, 11vw, 108px);
+  width: clamp(76px, 11vw, 108px);
   animation: spin 1.2s linear infinite;
 }
 
@@ -94,6 +119,11 @@
   margin: 4px auto 0;
   overflow: hidden;
   width: clamp(120px, 18vw, 160px);
+}
+
+.playerGrid .avatar {
+  height: clamp(96px, 13vw, 130px);
+  width: clamp(96px, 13vw, 130px);
 }
 
 .avatarImage {
@@ -114,10 +144,35 @@
   margin: 0;
 }
 
+.playerGrid .cardTitle {
+  color: #d39506;
+  font-size: clamp(20px, 2.3vw, 28px);
+  margin: 0;
+}
+
+.playerGrid .cardSubtitle {
+  color: #ffffff;
+  font-size: clamp(18px, 2.1vw, 26px);
+  margin: 0;
+}
+
 .hostGrid {
+  block-size: 100%;
   display: grid;
   gap: clamp(18px, 3vw, 30px);
-  grid-template-columns: minmax(0, 1fr) minmax(0, 1.1fr) minmax(0, 1fr);
+  grid-template-columns: minmax(260px, 1fr) minmax(320px, 1.15fr) minmax(
+      260px,
+      1fr
+    );
+  align-items: stretch;
+  min-block-size: 0;
+  overflow-y: auto;
+  overscroll-behavior: contain;
+  padding-block-start: clamp(10px, 1.2vh, 16px);
+  padding-inline-start: clamp(10px, 1vw, 16px);
+  padding-inline-end: clamp(10px, 1.1vw, 16px);
+  padding-block-end: clamp(12px, 1.4vh, 18px);
+  scrollbar-gutter: stable;
 }
 
 .playersCard,
@@ -341,7 +396,7 @@
 .shareCode {
   color: #d39506;
   display: block;
-  font-size: clamp(32px, 6vw, 96px);
+  font-size: clamp(28px, 5vw, 78px);
   line-height: 0.95;
   max-inline-size: 100%;
   margin: 0 0 clamp(16px, 3vw, 24px);
@@ -361,6 +416,122 @@
 .hostCard .cardSubtitle {
   text-align: center;
   width: 100%;
+}
+
+@media (min-width: 1001px) {
+  .hostGrid {
+    align-items: stretch;
+  }
+
+  .generateCard,
+  .playersCard,
+  .shareCard,
+  .hostCard {
+    block-size: auto;
+  }
+
+  .playersCard {
+    block-size: 100%;
+  }
+
+  .shareColumn {
+    align-content: start;
+    grid-template-rows: auto auto;
+  }
+}
+
+@media (min-width: 1001px) and (max-width: 1400px) {
+  .hostGrid {
+    gap: clamp(12px, 1.6vw, 20px);
+    grid-template-columns: minmax(220px, 1fr) minmax(300px, 1.15fr) minmax(
+        220px,
+        1fr
+      );
+  }
+
+  .playersCard,
+  .generateCard,
+  .shareCard,
+  .hostCard {
+    padding: clamp(14px, 1.6vw, 20px);
+  }
+
+  .sectionTitle {
+    font-size: clamp(24px, 2.6vw, 32px);
+    margin-bottom: clamp(12px, 1.4vw, 18px);
+  }
+
+  .playersList {
+    gap: clamp(10px, 1.1vw, 14px);
+  }
+
+  .playerPill {
+    font-size: clamp(17px, 1.8vw, 24px);
+    padding: clamp(8px, 0.9vw, 12px) clamp(12px, 1.3vw, 16px);
+  }
+
+  .generateForm {
+    gap: clamp(10px, 1.1vw, 14px);
+  }
+
+  .formLabel {
+    font-size: clamp(20px, 2vw, 28px);
+  }
+
+  .topicHint,
+  .formHint {
+    font-size: clamp(12px, 1.25vw, 16px);
+  }
+
+  .formInput {
+    font-size: clamp(16px, 1.8vw, 24px);
+    height: clamp(54px, 5.6vw, 66px);
+  }
+
+  .difficultyButton {
+    font-size: clamp(15px, 1.45vw, 21px);
+    padding: clamp(7px, 0.8vw, 10px) clamp(10px, 1vw, 14px);
+  }
+
+  .generateButton {
+    font-size: clamp(18px, 1.8vw, 24px);
+    margin-top: clamp(4px, 0.8vw, 8px);
+    padding: clamp(9px, 1vw, 12px);
+  }
+
+  .startGameButton {
+    font-size: clamp(20px, 2vw, 28px);
+  }
+
+  .lockedField {
+    min-height: clamp(52px, 5vw, 64px);
+  }
+
+  .lockedFieldValue {
+    font-size: clamp(20px, 2vw, 30px);
+  }
+
+  .consoleBox {
+    min-height: clamp(78px, 8vw, 110px);
+    padding: clamp(10px, 1.1vw, 14px);
+  }
+
+  .consoleLine {
+    font-size: clamp(11px, 1vw, 14px);
+  }
+
+  .shareTitle {
+    font-size: clamp(20px, 2.1vw, 28px);
+  }
+
+  .shareCode {
+    font-size: clamp(24px, 3.8vw, 58px);
+  }
+
+  .hostCard .avatar {
+    block-size: clamp(96px, 9.4vw, 126px);
+    inline-size: clamp(96px, 9.4vw, 126px);
+  }
 }
 
 .qrBox {
@@ -397,21 +568,30 @@
 }
 
 .runtimeLayout {
-  min-height: clamp(560px, 64vh, 820px);
+  --runtime-overlay-width: clamp(112px, 8.8vw, 150px);
+  --runtime-overlay-gap: clamp(12px, 1vw, 18px);
+  block-size: 100%;
+  min-height: 0;
   position: relative;
   width: 100%;
 }
 
+.runtimeLayoutWithOverlay {
+  padding-inline-end: calc(var(--runtime-overlay-width) + var(--runtime-overlay-gap));
+}
+
 .runtimeMain {
+  block-size: 100%;
   display: grid;
   gap: clamp(14px, 1.6vw, 18px);
   grid-template-rows: auto minmax(0, 1fr);
-  min-height: 100%;
+  min-height: 0;
   padding: clamp(20px, 1.8vw, 32px) clamp(16px, 1.5vw, 22px)
     clamp(20px, 1.8vw, 26px) clamp(22px, 2vw, 30px);
 }
 
 .runtimeStageMotion {
+  block-size: 100%;
   min-height: 0;
 }
 
@@ -538,9 +718,17 @@
 }
 
 .questionShell {
+  block-size: 100%;
   display: grid;
-  gap: clamp(18px, 2vw, 40px);
-  grid-template-columns: minmax(0, 1fr) minmax(0, 447px);
+  gap: clamp(14px, 1.4vw, 24px);
+  grid-template-columns: minmax(0, 1.08fr) minmax(0, 0.92fr);
+  margin-inline: auto;
+  max-inline-size: min(100%, 1220px);
+  min-height: 0;
+}
+
+.questionShell > * {
+  min-width: 0;
 }
 
 .questionCard {
@@ -551,7 +739,8 @@
   display: grid;
   gap: clamp(16px, 1.6vw, 24px);
   grid-template-rows: auto 1fr auto;
-  min-height: clamp(460px, 50vh, 781px);
+  block-size: 100%;
+  min-height: 0;
   padding: clamp(26px, 2.4vw, 42px) clamp(20px, 1.8vw, 36px)
     clamp(20px, 1.8vw, 34px);
 }
@@ -570,8 +759,8 @@
   border-radius: 37px;
   box-shadow: inset 5px 3px 5.8px 3px rgba(0, 0, 0, 0.25);
   display: flex;
-  min-height: clamp(220px, 27vh, 584px);
-  padding: clamp(24px, 2.1vw, 40px) clamp(18px, 1.7vw, 30px);
+  min-height: 0;
+  padding: clamp(28px, 2.4vw, 44px) clamp(22px, 2vw, 34px);
 }
 
 .questionText {
@@ -589,7 +778,8 @@
   box-shadow: 10px 9px 6.5px rgba(0, 0, 0, 0.25);
   gap: clamp(10px, 1vw, 18px);
   grid-template-rows: repeat(4, minmax(0, 1fr)) auto;
-  min-height: clamp(460px, 50vh, 820px);
+  block-size: 100%;
+  min-height: 0;
   padding: clamp(20px, 1.7vw, 33px) clamp(14px, 1.4vw, 22px)
     clamp(18px, 1.4vw, 30px);
 }
@@ -645,8 +835,11 @@
 .revealShell {
   display: grid;
   gap: clamp(18px, 1.8vw, 26px);
-  grid-template-rows: minmax(0, 1.08fr) minmax(0, 0.92fr);
-  height: 100%;
+  grid-template-rows: auto auto;
+  align-content: start;
+  margin-inline: auto;
+  max-inline-size: min(100%, 1220px);
+  height: auto;
   min-height: 0;
 }
 
@@ -671,11 +864,12 @@
   box-shadow: 10px 9px 6.5px rgba(0, 0, 0, 0.25);
   display: grid;
   gap: clamp(10px, 1vw, 18px);
-  grid-template-rows: auto 1fr auto;
+  grid-template-rows: auto auto auto;
+  block-size: auto;
   min-height: 0;
-  overflow: hidden;
-  padding: clamp(18px, 1.6vw, 26px) clamp(20px, 1.8vw, 30px)
-    clamp(14px, 1.3vw, 20px);
+  overflow: visible;
+  padding: clamp(20px, 1.8vw, 26px) clamp(24px, 2vw, 30px)
+    clamp(18px, 2vw, 20px);
 }
 
 .revealTopCardCorrect {
@@ -699,11 +893,9 @@
   border-radius: 37px;
   box-shadow: inset 5px 3px 5.8px 3px rgba(0, 0, 0, 0.25);
   display: flex;
-  overflow-y: auto;
-  overflow-x: hidden;
-  scrollbar-gutter: stable;
-  min-height: clamp(84px, 8vw, 169px);
-  padding: clamp(18px, 1.6vw, 34px) clamp(18px, 1.6vw, 28px);
+  overflow: visible;
+  min-height: auto;
+  padding: clamp(22px, 1.9vw, 38px) clamp(22px, 1.9vw, 32px);
 }
 
 .revealQuestionText {
@@ -750,9 +942,10 @@
   box-shadow: 10px 9px 6.5px rgba(0, 0, 0, 0.25);
   display: grid;
   gap: clamp(10px, 1vw, 16px);
-  grid-template-rows: 1fr auto;
+  grid-template-rows: auto auto;
+  block-size: auto;
   min-height: 0;
-  overflow: hidden;
+  overflow: visible;
   padding: clamp(12px, 1.1vw, 18px) clamp(18px, 1.7vw, 26px)
     clamp(10px, 0.9vw, 14px);
 }
@@ -771,12 +964,14 @@
   min-width: 0;
   overflow-y: auto;
   overflow-x: hidden;
+  padding-inline-start: clamp(6px, 0.6vw, 10px);
+  padding-inline-end: clamp(12px, 1vw, 16px);
   scrollbar-gutter: stable;
 }
 
 .revealPromptCard::-webkit-scrollbar,
 .revealLeaderboardList::-webkit-scrollbar {
-  width: 8px;
+  width: 4px;
 }
 
 .revealPromptCard::-webkit-scrollbar-thumb,
@@ -869,13 +1064,15 @@
 
 .resultsStage {
   font-family: "Modak", sans-serif;
-  min-height: clamp(620px, 66vh, 820px);
+  block-size: 100%;
+  min-height: 0;
 }
 
 .resultsGrid {
   display: grid;
-  gap: clamp(16px, 1.8vw, 32px);
+  gap: clamp(12px, 1.4vw, 24px);
   grid-template-columns: minmax(0, 400px) minmax(0, 400px) minmax(0, 503px);
+  min-height: 0;
   justify-content: space-between;
 }
 
@@ -884,7 +1081,7 @@
   background: #56018c;
   border-radius: 37px;
   box-shadow: 10px 9px 6.5px rgba(0, 0, 0, 0.25);
-  min-height: clamp(270px, 24vw, 400px);
+  min-height: clamp(220px, 20vw, 320px);
 }
 
 .resultsPlayerCard {
@@ -893,8 +1090,8 @@
   gap: clamp(6px, 0.6vw, 10px);
   justify-items: center;
   overflow: hidden;
-  padding: clamp(14px, 1.2vw, 20px) clamp(12px, 1.1vw, 16px)
-    clamp(12px, 1vw, 16px);
+  padding: clamp(12px, 1vw, 16px) clamp(10px, 0.9vw, 14px)
+    clamp(10px, 0.9vw, 14px);
   text-align: center;
 }
 
@@ -914,7 +1111,7 @@
 
 .resultsPlayerCardTitle {
   color: #ffaf02;
-  font-size: clamp(28px, 2.5vw, 45px);
+  font-size: clamp(24px, 2.1vw, 36px);
   font-weight: 400;
   line-height: 1;
   margin: 0;
@@ -923,11 +1120,11 @@
 .resultsAvatarWrap {
   border-radius: 50%;
   box-shadow: 0 4px 8px rgba(0, 0, 0, 0.35);
-  height: clamp(112px, 11vw, 170px);
+  height: clamp(92px, 8.2vw, 136px);
   justify-self: center;
   margin-inline: auto;
   overflow: hidden;
-  width: clamp(112px, 11vw, 170px);
+  width: clamp(92px, 8.2vw, 136px);
 }
 
 .resultsAvatar {
@@ -939,7 +1136,7 @@
 .resultsNickname {
   justify-self: center;
   color: #ffffff;
-  font-size: clamp(30px, 2.45vw, 45px);
+  font-size: clamp(24px, 2.1vw, 34px);
   font-weight: 400;
   line-height: 1;
   margin: 0;
@@ -956,7 +1153,7 @@
 
 .resultsScoreLine {
   color: #ffffff;
-  font-size: clamp(30px, 2.45vw, 45px);
+  font-size: clamp(24px, 2.1vw, 34px);
   font-weight: 400;
   line-height: 1;
   margin: 0;
@@ -971,15 +1168,15 @@
   background: #43006d;
   border: 2px solid #ffffff;
   display: grid;
-  gap: clamp(20px, 1.8vw, 30px);
+  gap: clamp(14px, 1.2vw, 20px);
   justify-items: center;
-  padding: clamp(20px, 1.8vw, 30px);
+  padding: clamp(14px, 1.2vw, 20px);
   text-align: center;
 }
 
 .resultsRatingLabel {
   color: #ffaf02;
-  font-size: clamp(30px, 2.6vw, 45px);
+  font-size: clamp(24px, 2.1vw, 34px);
   font-weight: 400;
   line-height: 1;
   margin: 0;
@@ -987,20 +1184,21 @@
 
 .resultsRatingValue {
   color: #ffffff;
-  font-size: clamp(30px, 2.6vw, 45px);
+  font-size: clamp(24px, 2.1vw, 34px);
   font-weight: 400;
   line-height: 1;
   margin: 0;
 }
 
 .runtimeOverlay {
-  bottom: auto;
-  height: calc(100% + clamp(36px, 2.5vw, 55px));
-  left: calc(100% + clamp(18px, 1.6vw, 34px));
+  bottom: 0;
+  height: 100%;
+  left: auto;
   pointer-events: none;
   position: absolute;
-  top: clamp(-36px, -2.5vw, -33px);
-  width: clamp(130px, 9.8vw, 167px);
+  right: 0;
+  top: 0;
+  width: var(--runtime-overlay-width);
 }
 
 .sidebarPlayers {
@@ -1016,9 +1214,9 @@
 .sidebarAvatarWrap {
   border-radius: 50%;
   box-shadow: 0 20px 8.2px rgba(0, 0, 0, 0.35);
-  height: clamp(90px, 8.4vw, 144px);
+  height: clamp(80px, 6.8vw, 122px);
   overflow: hidden;
-  width: clamp(90px, 8.4vw, 144px);
+  width: clamp(80px, 6.8vw, 122px);
 }
 
 .sidebarAvatarWrap + .sidebarAvatarWrap {
@@ -1046,13 +1244,13 @@
   display: grid;
   gap: clamp(8px, 0.9vw, 12px);
   justify-items: center;
-  min-height: clamp(240px, 24vw, 312px);
+  min-height: clamp(210px, 20vw, 286px);
   padding: clamp(10px, 1vw, 16px) clamp(8px, 0.8vw, 12px);
   pointer-events: auto;
   position: absolute;
   right: 0;
   bottom: 0;
-  min-width: clamp(130px, 9.8vw, 167px);
+  min-width: var(--runtime-overlay-width);
   width: 100%;
   text-align: center;
 }
@@ -1093,6 +1291,155 @@
   word-wrap: break-word;
 }
 
+.panel,
+.hostGrid {
+  scrollbar-color: #ffffff transparent;
+  scrollbar-width: thin;
+}
+
+.panel::-webkit-scrollbar,
+.hostGrid::-webkit-scrollbar {
+  inline-size: 8px;
+}
+
+.panel::-webkit-scrollbar-track,
+.hostGrid::-webkit-scrollbar-track {
+  background: transparent;
+}
+
+.panel::-webkit-scrollbar-thumb,
+.hostGrid::-webkit-scrollbar-thumb {
+  background: #ffffff;
+  border-radius: 999px;
+}
+
+@media (max-width: 1500px) {
+  .runtimeLayout {
+    --runtime-overlay-width: clamp(100px, 8vw, 132px);
+    --runtime-overlay-gap: clamp(10px, 0.9vw, 14px);
+  }
+
+  .runtimeMain {
+    gap: clamp(10px, 1.1vw, 14px);
+    padding: clamp(14px, 1.3vw, 22px) clamp(12px, 1.1vw, 18px)
+      clamp(14px, 1.3vw, 18px) clamp(14px, 1.2vw, 20px);
+  }
+
+  .questionShell {
+    gap: clamp(10px, 1vw, 16px);
+  }
+
+  .questionCard {
+    gap: clamp(12px, 1.1vw, 18px);
+    padding: clamp(16px, 1.4vw, 24px) clamp(14px, 1.2vw, 20px)
+      clamp(14px, 1.2vw, 18px);
+  }
+
+  .questionNumber {
+    font-size: clamp(26px, 2.3vw, 38px);
+  }
+
+  .questionPrompt {
+    padding: clamp(18px, 1.5vw, 26px) clamp(16px, 1.3vw, 22px);
+  }
+
+  .questionText {
+    font-size: clamp(20px, 1.7vw, 28px);
+  }
+
+  .answersPanel {
+    gap: clamp(8px, 0.8vw, 12px);
+    padding: clamp(14px, 1.2vw, 20px) clamp(10px, 0.9vw, 16px)
+      clamp(12px, 1vw, 18px);
+  }
+
+  .answerOption {
+    font-size: clamp(16px, 1.35vw, 24px);
+    min-height: clamp(58px, 5.2vh, 90px);
+    padding: 0 clamp(12px, 1.2vw, 20px);
+  }
+
+  .lockAnswerButton {
+    font-size: clamp(18px, 1.5vw, 26px);
+    min-height: clamp(52px, 4.6vh, 72px);
+  }
+
+  .revealShell {
+    gap: clamp(12px, 1.1vw, 18px);
+  }
+
+  .revealTopCard {
+    padding: clamp(14px, 1.2vw, 20px) clamp(14px, 1.2vw, 20px)
+      clamp(12px, 1vw, 16px);
+  }
+
+  .revealTitle {
+    font-size: clamp(24px, 2vw, 38px);
+  }
+
+  .revealPromptCard {
+    padding: clamp(16px, 1.3vw, 24px);
+  }
+
+  .revealQuestionText {
+    font-size: clamp(18px, 1.5vw, 26px);
+  }
+
+  .revealCorrectLabel {
+    font-size: clamp(22px, 1.9vw, 36px);
+  }
+
+  .revealCorrectValue {
+    font-size: clamp(18px, 1.5vw, 26px);
+    min-height: clamp(48px, 4.2vh, 78px);
+  }
+
+  .revealLeaderboardCard {
+    padding: clamp(10px, 0.9vw, 14px) clamp(12px, 1vw, 16px)
+      clamp(8px, 0.8vw, 12px);
+  }
+
+  .revealRankIndex {
+    font-size: clamp(18px, 1.4vw, 26px);
+  }
+
+  .revealRankPill {
+    font-size: clamp(18px, 1.5vw, 28px);
+    min-height: clamp(38px, 3vw, 52px);
+  }
+
+  .revealPlacement p {
+    font-size: clamp(22px, 2vw, 36px);
+  }
+
+  .revealPlacement span {
+    font-size: clamp(28px, 2.2vw, 40px);
+  }
+
+  .sidebarAvatarWrap {
+    height: clamp(74px, 6vw, 108px);
+    width: clamp(74px, 6vw, 108px);
+  }
+
+  .sidebarScore {
+    min-height: clamp(190px, 17vw, 250px);
+    padding: clamp(8px, 0.7vw, 12px);
+  }
+
+  .sidebarScoreTitle {
+    font-size: clamp(22px, 1.9vw, 32px);
+  }
+
+  .sidebarScoreValue {
+    font-size: clamp(24px, 2vw, 34px);
+  }
+
+  .sidebarRoomLabel,
+  .sidebarRoomValue {
+    font-size: clamp(18px, 1.6vw, 28px);
+  }
+}
+
 @keyframes spin {
   to {
     transform: rotate(360deg);
@@ -1112,6 +1459,12 @@
 }
 
 @media (max-width: 1000px) {
+  .panelHostSetup {
+    padding-block: clamp(2px, 0.4vh, 6px);
+    padding-inline-start: clamp(6px, 0.8vw, 10px);
+    padding-inline-end: clamp(16px, 2vw, 24px);
+  }
+
   .darkContainerGameFlow {
     min-height: auto;
     width: 100%;
@@ -1120,15 +1473,47 @@
   .panelGameFlow {
     margin-right: 0;
     min-height: auto;
-    padding: clamp(14px, 3.2vw, 20px);
+    overflow-y: auto;
+    padding-block: clamp(14px, 3.2vw, 20px);
+    padding-inline-start: clamp(6px, 0.8vw, 10px);
+    padding-inline-end: clamp(16px, 2vw, 24px);
   }
 
   .panelGameFlowResults {
-    padding: clamp(14px, 3.2vw, 20px);
+    padding-block: clamp(14px, 3.2vw, 20px);
+    padding-inline-start: clamp(6px, 0.8vw, 10px);
+    padding-inline-end: clamp(16px, 2vw, 24px);
   }
 
   .hostGrid {
-    grid-template-columns: 1fr;
+    block-size: auto;
+    grid-template-columns: repeat(2, minmax(0, 1fr));
+    overflow: visible;
+    padding-inline-end: 0;
+  }
+
+  .generateCard {
+    order: 1;
+    grid-column: 1 / -1;
+  }
+
+  .shareColumn {
+    display: contents;
+  }
+
+  .shareCard {
+    order: 2;
+    grid-column: 1;
+  }
+
+  .playersCard {
+    order: 3;
+    grid-column: 2;
+  }
+
+  .hostCard {
+    order: 4;
+    grid-column: 1 / -1;
   }
 
   .playerGrid {
@@ -1142,11 +1527,36 @@
   }
 
   .questionShell {
+    block-size: auto;
+    margin-inline: 0;
+    max-inline-size: none;
     grid-template-columns: 1fr;
+  }
+
+  .questionProgressQuestion,
+  .questionProgressReveal {
+    margin-inline: clamp(15px, 2.2vw, 22px);
+    width: calc(100% - (2 * clamp(15px, 2.2vw, 22px)));
+  }
+
+  .runtimeMain {
+    block-size: auto;
+  }
+
+  .runtimeStageMotion {
+    block-size: auto;
+  }
+
+  .questionCard,
+  .answersPanel {
+    block-size: auto;
+    min-height: clamp(340px, 44vh, 620px);
   }
 
   .revealShell {
     grid-template-rows: auto;
+    margin-inline: 0;
+    max-inline-size: none;
     min-height: auto;
   }
 
@@ -1193,7 +1603,93 @@
   }
 
   .resultsRatingCard {
+    order: -1;
+    grid-column: 1 / -1;
     min-height: clamp(220px, 42vw, 290px);
+  }
+}
+
+@media (min-width: 1500px) {
+  .questionShell {
+    grid-template-columns: minmax(0, 1fr) minmax(0, 1fr);
+    max-inline-size: min(100%, 1320px);
+  }
+
+  .revealShell {
+    max-inline-size: min(100%, 1320px);
+  }
+}
+
+@media (max-width: 760px) {
+  .runtimeMainReveal {
+    overflow: visible;
+  }
+
+  .revealTopCard {
+    grid-template-rows: auto auto auto;
+    overflow: hidden;
+    padding: 20px 20px 40px;
+  }
+
+  .revealPromptCard {
+    min-height: auto;
+    overflow: visible;
+    padding: clamp(14px, 4vw, 20px);
+  }
+
+  .revealQuestionText {
+    font-size: clamp(14px, 4.2vw, 18px);
+    line-height: 1.2;
+  }
+
+  .revealCorrectRow {
+    align-items: stretch;
+    gap: clamp(8px, 2.4vw, 12px);
+    grid-template-columns: 1fr;
+    min-width: 0;
+  }
+
+  .revealCorrectLabel {
+    font-size: clamp(14px, 6vw, 22px);
+    line-height: 1.05;
+    text-align: left;
+  }
+
+  .revealCorrectValue {
+    box-sizing: border-box;
+    font-size: clamp(14px, 5.4vw, 22px);
+    min-height: 0;
+    width: 100%;
+  }
+
+  .questionText {
+    font-size: clamp(16px, 5vw, 22px);
+    line-height: 1.2;
+  }
+
+  .panelGameFlow,
+  .panelGameFlowResults {
+    padding-inline-start: clamp(5px, 1.4vw, 8px);
+    padding-inline-end: clamp(14px, 3.4vw, 18px);
+  }
+
+  .panelHostSetup {
+    padding-inline-start: clamp(5px, 1.4vw, 8px);
+    padding-inline-end: clamp(14px, 3.4vw, 18px);
+  }
+
+  .hostGrid {
+    grid-template-columns: 1fr;
+  }
+
+  .generateCard {
+    grid-column: auto;
+  }
+
+  .shareCard,
+  .playersCard,
+  .hostCard {
+    grid-column: auto;
   }
 }
 
@@ -1219,6 +1715,7 @@
   }
 
   .resultsRatingCard {
+    order: -1;
     grid-column: 1 / -1;
   }
 }

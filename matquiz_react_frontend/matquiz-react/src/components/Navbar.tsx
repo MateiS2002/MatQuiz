@@ -283,7 +283,7 @@ const Navbar = () => {
                     Login
                   </button>
                 )}
-                <div className={styles.menu} ref={menuRef}>
+                <div ref={menuRef}>
                   <motion.button
                     className={styles.menuButton}
                     type="button"
