@@ -65,6 +65,7 @@ const Home = () => {
         message={
           "This is a testing deployment of MatQuiz.\n\nSome features are still under development and may not be available yet.\n\nIf you encounter issues, it is likely because the app is still in active development."
         }
+        sizePreset="startup"
         onClose={() => {
           setIsDeploymentNoticeOpen(false)
         }}

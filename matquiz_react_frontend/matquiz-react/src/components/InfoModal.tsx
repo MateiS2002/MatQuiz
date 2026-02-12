@@ -5,9 +5,19 @@ type InfoModalProps = {
   title: string
   message: string
   onClose: () => void
+  sizePreset?: "default" | "startup"
 }
 
-const InfoModal = ({ open, title, message, onClose }: InfoModalProps) => {
+const InfoModal = ({
+  open,
+  title,
+  message,
+  onClose,
+  sizePreset = "default",
+}: InfoModalProps) => {
+  const isStartupPreset =
+    sizePreset === "startup" || title === "Testing Deployment Notice"
+
   if (!open) {
     return null
   }
@@ -15,7 +25,7 @@ const InfoModal = ({ open, title, message, onClose }: InfoModalProps) => {
   return (
     <div className={styles.overlay} role="presentation">
       <div
-        className={styles.modal}
+        className={`${styles.modal} ${isStartupPreset ? styles.modalStartup : ""}`}
         role="dialog"
         aria-modal="true"
         aria-labelledby="info-modal-title"

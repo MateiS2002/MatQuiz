@@ -11,8 +11,10 @@
 }
 
 html {
+  background: #6a00ac;
   font-family: var(--font-body), serif;
   font-weight: var(--weight-regular);
+  min-height: 100%;
   overflow-x: hidden;
   overflow-y: scroll;
 }
@@ -24,14 +26,17 @@ html {
 }
 
 body {
+  background: #6a00ac;
   margin: 0;
   font-family: inherit;
+  min-height: 100dvh;
   overflow-x: hidden;
   -webkit-font-smoothing: antialiased;
   -moz-osx-font-smoothing: grayscale;
 }
 
 #root {
+  min-height: 100dvh;
   overflow-x: hidden;
 }
 
