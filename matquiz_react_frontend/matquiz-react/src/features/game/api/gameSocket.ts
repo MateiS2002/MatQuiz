@@ -1,6 +1,6 @@
 /**
- * Shared STOMP-over-SockJS client with connection reuse and helpers for
- * publishing and subscribing to game-related destinations.
+ * Shared STOMP client with native WebSocket first and lazy SockJS fallback for
+ * legacy browsers, plus connection reuse helpers.
  */
 
 import {
@@ -9,7 +9,6 @@ import {
   type IMessage,
   type StompSubscription,
 } from "@stomp/stompjs"
-import SockJS from "sockjs-client"
 
 type MessageParser<T> = (body: string) => T
 type Unsubscribe = () => void
@@ -21,7 +20,40 @@ let activeToken: string | null = null
 let connectPromise: Promise<void> | null = null
 let refCount = 0
 
-const getWsUrl = (): string => {
+const normalizeNativeBrokerUrl = (rawUrl: string): string => {
+  if (rawUrl.startsWith("ws://") || rawUrl.startsWith("wss://")) {
+    return rawUrl
+  }
+  if (rawUrl.startsWith("http://")) {
+    return `ws://${rawUrl.slice("http://".length)}`
+  }
+  if (rawUrl.startsWith("https://")) {
+    return `wss://${rawUrl.slice("https://".length)}`
+  }
+  if (rawUrl.startsWith("/")) {
+    const protocol = window.location.protocol === "https:" ? "wss:" : "ws:"
+    return `${protocol}//${window.location.host}${rawUrl}`
+  }
+  return rawUrl
+}
+
+const normalizeSockJsUrl = (rawUrl: string): string => {
+  if (rawUrl.startsWith("http://") || rawUrl.startsWith("https://")) {
+    return rawUrl
+  }
+  if (rawUrl.startsWith("ws://")) {
+    return `http://${rawUrl.slice("ws://".length)}`
+  }
+  if (rawUrl.startsWith("wss://")) {
+    return `https://${rawUrl.slice("wss://".length)}`
+  }
+  if (rawUrl.startsWith("/")) {
+    return `${window.location.origin}${rawUrl}`
+  }
+  return rawUrl
+}
+
+const getConfiguredWsUrl = (): string => {
   const env = import.meta.env as { VITE_WS_URL?: string }
   const configuredUrl = env.VITE_WS_URL?.trim()
   const wsUrl = configuredUrl && configuredUrl.length > 0
@@ -30,13 +62,40 @@ const getWsUrl = (): string => {
   return wsUrl.replace(/\/+$/, "")
 }
 
-const createClient = (token: string) => {
-  const nextClient = new Client({
-    webSocketFactory: () => new SockJS(getWsUrl()),
+const getNativeWsUrl = (): string => normalizeNativeBrokerUrl(getConfiguredWsUrl())
+
+const getSockJsUrl = (): string => normalizeSockJsUrl(getConfiguredWsUrl())
+
+const supportsNativeWebSocket = (): boolean =>
+  typeof window !== "undefined" && typeof window.WebSocket !== "undefined"
+
+const loadSockJsFactory = async () => {
+  await import("@/polyfills")
+  const sockJsModule = await import("sockjs-client")
+  return sockJsModule.default
+}
+
+const createClient = async (token: string): Promise<Client> => {
+  const nativeWsUrl = getNativeWsUrl()
+  const baseConfig = {
     reconnectDelay: 5000,
     connectHeaders: {
       Authorization: `Bearer ${token}`,
     },
+  }
+  if (supportsNativeWebSocket()) {
+    const nextClient = new Client({
+        ...baseConfig,
+        brokerURL: nativeWsUrl,
+      })
+    nextClient.debug = () => undefined
+    return nextClient
+  }
+
+  const SockJS = await loadSockJsFactory()
+  const nextClient = new Client({
+    ...baseConfig,
+    webSocketFactory: () => new SockJS(getSockJsUrl()),
   })
   nextClient.debug = () => undefined
   return nextClient
@@ -54,7 +113,7 @@ const connect = async (token: string) => {
     await client.deactivate()
   }
   activeToken = token
-  client = createClient(token)
+  client = await createClient(token)
   connectPromise = new Promise((resolve, reject) => {
     if (!client) {
       reject(new Error("WebSocket client not initialized"))

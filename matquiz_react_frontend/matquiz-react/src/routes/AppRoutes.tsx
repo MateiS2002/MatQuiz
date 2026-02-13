@@ -1,3 +1,4 @@
+import { lazy, Suspense } from "react"
 import { Route, Routes } from "react-router-dom"
 import Home from "@/pages/Home"
 import Login from "@/pages/Login"
@@ -5,15 +6,16 @@ import Logout from "@/pages/Logout"
 import Register from "@/pages/Register"
 import Terms from "@/pages/Terms"
 import Profile from "@/pages/Profile"
-import Settings from "@/pages/Settings"
 import Contact from "@/pages/Contact"
-import Leaderboard from "@/pages/Leaderboard"
 import GameControl from "@/pages/GameControl"
 import Join from "@/pages/Join"
 import Create from "@/pages/Create"
-import Lobby from "@/pages/Lobby"
 import { ROUTES } from "@/routes/paths"
 import RequireAuth from "@/routes/RequireAuth"
+
+const Lobby = lazy(() => import("@/pages/Lobby"))
+const Settings = lazy(() => import("@/pages/Settings"))
+const Leaderboard = lazy(() => import("@/pages/Leaderboard"))
 
 const AppRoutes = () => (
   <Routes>
@@ -36,7 +38,9 @@ const AppRoutes = () => (
       path={ROUTES.settings}
       element={
         <RequireAuth>
-          <Settings />
+          <Suspense fallback={<div>Loading settings...</div>}>
+            <Settings />
+          </Suspense>
         </RequireAuth>
       }
     />
@@ -52,7 +56,9 @@ const AppRoutes = () => (
       path={ROUTES.leaderboard}
       element={
         <RequireAuth>
-          <Leaderboard />
+          <Suspense fallback={<div>Loading leaderboard...</div>}>
+            <Leaderboard />
+          </Suspense>
         </RequireAuth>
       }
     />
@@ -84,7 +90,9 @@ const AppRoutes = () => (
       path={ROUTES.lobby}
       element={
         <RequireAuth>
-          <Lobby />
+          <Suspense fallback={<div>Loading lobby...</div>}>
+            <Lobby />
+          </Suspense>
         </RequireAuth>
       }
     />

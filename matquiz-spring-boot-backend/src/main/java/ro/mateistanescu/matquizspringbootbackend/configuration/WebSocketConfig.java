@@ -21,6 +21,9 @@ public class WebSocketConfig implements WebSocketMessageBrokerConfigurer {
     @Override
     public void registerStompEndpoints(StompEndpointRegistry registry) {
         registry.addEndpoint("/ws")
+                .setAllowedOriginPatterns("*"); // Native WebSocket STOMP endpoint
+
+        registry.addEndpoint("/ws")
                 .setAllowedOriginPatterns("*") // Allow React localhost:5173
                 .withSockJS(); // Enable fallback for browsers without WS support
     }

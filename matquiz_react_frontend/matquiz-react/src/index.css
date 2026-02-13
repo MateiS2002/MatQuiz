@@ -1,6 +1,25 @@
+@font-face {
+  font-family: "Modak";
+  src: url("/fonts/Modak-Regular.woff2") format("woff2"),
+    url("/fonts/Modak-Regular.woff") format("woff");
+  font-style: normal;
+  font-weight: 400;
+  font-display: swap;
+}
+
+@font-face {
+  font-family: "JetBrains Mono";
+  src: url("/fonts/JetBrainsMono-Regular.woff2") format("woff2"),
+    url("/fonts/JetBrainsMono-Regular.woff") format("woff");
+  font-style: normal;
+  font-weight: 400;
+  font-display: swap;
+}
+
 :root {
   --font-display: "Modak", "Comic Sans MS", "Trebuchet MS", cursive;
   --font-body: "Modak", "Comic Sans MS", "Trebuchet MS", cursive;
+  --font-mono: "JetBrains Mono", "Courier New", monospace;
   --weight-regular: 400;
   --size-h1: clamp(67px, 8.4vw, 160px);
   --size-h2: clamp(44px, 6.9vw, 100px);

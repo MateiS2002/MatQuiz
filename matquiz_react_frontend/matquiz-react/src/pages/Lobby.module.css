@@ -230,7 +230,7 @@
 
 .topicHint {
   color: rgba(255, 255, 255, 0.72);
-  font-family: "JetBrains Mono", monospace;
+  font-family: var(--font-mono);
   font-size: clamp(10px, 1.5vw, 15px);
   margin: calc(clamp(12px, 2.2vw, 18px) * -0.5) 0 0;
 }
@@ -370,7 +370,7 @@
 
 .formHint {
   color: rgba(255, 255, 255, 0.7);
-  font-family: "JetBrains Mono", monospace;
+  font-family: var(--font-mono);
   font-size: clamp(13px, 2.6vw, 19px);
   margin: clamp(12px, 2vw, 18px) 0 0;
   text-align: center;
@@ -793,7 +793,7 @@
   cursor: pointer;
   display: flex;
   font-size: clamp(17px, 1.5vw, 32px);
-  font-family: "JetBrains Mono", monospace;
+  font-family: var(--font-mono);
   justify-content: space-between;
   min-height: clamp(68px, 7.2vh, 120px);
   height: 100%;
@@ -900,7 +900,7 @@
 
 .revealQuestionText {
   color: #f7f3ff;
-  font-family: "JetBrains Mono", monospace;
+  font-family: var(--font-mono);
   font-size: clamp(20px, 1.85vw, 32px);
   line-height: 1.2;
   margin: 0;
@@ -929,7 +929,7 @@
   box-shadow: inset 5px 3px 5.8px 3px rgba(0, 0, 0, 0.25);
   color: #f7f3ff;
   display: flex;
-  font-family: "JetBrains Mono", monospace;
+  font-family: var(--font-mono);
   font-size: clamp(20px, 1.8vw, 32px);
   min-height: clamp(56px, 5vw, 112px);
   margin: 0;

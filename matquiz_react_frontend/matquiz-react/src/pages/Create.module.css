@@ -96,7 +96,7 @@
 }
 
 .consoleLine {
-  font-family: "JetBrains Mono", monospace;
+  font-family: var(--font-mono);
   font-size: clamp(12px, 1.1vw, 16px);
   line-height: 1.25;
   margin: 0;
