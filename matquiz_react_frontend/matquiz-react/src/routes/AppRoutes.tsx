@@ -38,7 +38,7 @@ const AppRoutes = () => (
       path={ROUTES.settings}
       element={
         <RequireAuth>
-          <Suspense fallback={<div>Loading settings...</div>}>
+          <Suspense fallback={null}>
             <Settings />
           </Suspense>
         </RequireAuth>
@@ -56,7 +56,7 @@ const AppRoutes = () => (
       path={ROUTES.leaderboard}
       element={
         <RequireAuth>
-          <Suspense fallback={<div>Loading leaderboard...</div>}>
+          <Suspense fallback={null}>
             <Leaderboard />
           </Suspense>
         </RequireAuth>
@@ -90,7 +90,7 @@ const AppRoutes = () => (
       path={ROUTES.lobby}
       element={
         <RequireAuth>
-          <Suspense fallback={<div>Loading lobby...</div>}>
+          <Suspense fallback={null}>
             <Lobby />
           </Suspense>
         </RequireAuth>
