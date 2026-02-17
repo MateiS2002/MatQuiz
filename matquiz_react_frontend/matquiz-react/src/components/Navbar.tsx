@@ -7,7 +7,6 @@ import {
   useEndGameMutation,
   useRequestQuestionMutation,
 } from "@/features/game/api/gameApiSlice"
-import { clearToken } from "@/features/auth/slice/authSlice"
 import LeaveGameModal from "@/features/game/components/LeaveGameModal"
 import { useLeaveGameGuard } from "@/features/game/hooks/useLeaveGameGuard"
 import { setLastError } from "@/features/game/slice/gameSlice"
@@ -138,8 +137,6 @@ const Navbar = () => {
   }, [isGameRuntime])
 
   const performLogout = () => {
-    sessionStorage.removeItem("matquiz_token")
-    dispatch(clearToken())
     setMenuOpen(false)
     void navigate(ROUTES.logout)
   }

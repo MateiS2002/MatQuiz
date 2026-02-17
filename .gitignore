@@ -1,0 +1,4 @@
+# Repository-wide Python cache hygiene
+**/__pycache__/
+*.py[cod]
+*$py.class

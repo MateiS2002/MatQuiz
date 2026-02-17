@@ -46,7 +46,7 @@ const Login = () => {
                 className={styles.input}
                 name="username"
                 autoComplete="username"
-                placeholder=""
+                placeholder="Type your username"
                 value={username}
                 onChange={event => {
                   setUsername(event.target.value)
@@ -61,7 +61,7 @@ const Login = () => {
                 type="password"
                 name="password"
                 autoComplete="current-password"
-                placeholder="****************"
+                placeholder="Type your password"
                 value={password}
                 onChange={event => {
                   setPassword(event.target.value)

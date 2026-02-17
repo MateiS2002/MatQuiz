@@ -98,11 +98,7 @@ const AppRoutes = () => (
     />
     <Route
       path={ROUTES.logout}
-      element={
-        <RequireAuth>
-          <Logout />
-        </RequireAuth>
-      }
+      element={<Logout />}
     />
   </Routes>
 )
