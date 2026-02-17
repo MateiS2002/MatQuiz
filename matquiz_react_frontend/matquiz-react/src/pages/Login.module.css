@@ -59,8 +59,8 @@
 }
 
 .input::placeholder {
-  color: #c4c3c3;
-  font-size: 45px;
+  color: #8a8a8a;
+  font-size: clamp(18px, 2.5vw, 26px);
   opacity: 1;
 }
 
