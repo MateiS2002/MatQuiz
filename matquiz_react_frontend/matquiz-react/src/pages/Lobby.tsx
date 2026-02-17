@@ -342,8 +342,8 @@ const Lobby = () => {
       GENERATING_FACTS[Math.floor(Math.random() * GENERATING_FACTS.length)]
 
     setConsoleLines([
-      "Connected to server api.google.com",
-      "Generating quiz using Gemini...",
+      "Connected to server api.openai.com",
+      "Generating quiz using ChatGPT-5...",
       `Fun fact: ${generationFactRef.current}`,
     ])
   }, [isHost, isLockedGenerationState, isRoomGenerating, isRoomReady])
