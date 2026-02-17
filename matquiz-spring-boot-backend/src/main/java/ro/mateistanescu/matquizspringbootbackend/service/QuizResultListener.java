@@ -15,6 +15,10 @@ import ro.mateistanescu.matquizspringbootbackend.mapper.GameMapper;
 @RequiredArgsConstructor
 @Slf4j
 public class QuizResultListener {
+    private static final String STATUS_SUCCESS = "SUCCESS";
+    private static final String STATUS_FAILED = "FAILED";
+    private static final String GENERATION_UNAVAILABLE_MESSAGE =
+            "MatQuiz AI generation service is currently unavailable. Please check back later. We are sorry.";
 
     private final GameService gameService;
     private final GameMapper gameMapper;
@@ -22,22 +26,50 @@ public class QuizResultListener {
 
     @RabbitListener(queues = RabbitMqConfig.QUIZ_RESULTS_QUEUE)
     public void receiveGeneratedQuiz(QuizResultMessage message){
-        log.info("RABBITMQ: Received generated quiz for room: {}", message.getRoomCode());
+        log.info("RABBITMQ: Received quiz result for room {} with status {}", message.getRoomCode(), message.getStatus());
 
         try {
-            GameRoom updatedRoom = gameService.processQuizResult(message);
+            if (STATUS_SUCCESS.equalsIgnoreCase(message.getStatus())) {
+                GameRoom updatedRoom = gameService.processQuizResult(message);
+                broadcastUpdatedRoom(updatedRoom);
+                log.info("BROADCAST: Sent READY room state to room {}", updatedRoom.getRoomCode());
+                return;
+            }
 
-            GameRoomDto roomDto = gameMapper.toDto(updatedRoom);
+            if (STATUS_FAILED.equalsIgnoreCase(message.getStatus())) {
+                String errorMessage = message.getErrorMessage() == null
+                        ? "Quiz generation failed. Please try again."
+                        : message.getErrorMessage();
 
-            messagingTemplate.convertAndSend(
-                    "/topic/room/" + updatedRoom.getRoomCode(),
-                    roomDto
-            );
+                GameRoom updatedRoom = gameService.handleQuizGenerationFailure(message.getRoomCode(), errorMessage);
+                broadcastUpdatedRoom(updatedRoom);
+                log.warn(
+                        "Quiz generation failed for room {} with code {} and reason {}",
+                        updatedRoom.getRoomCode(),
+                        message.getErrorCode(),
+                        errorMessage
+                );
+                messagingTemplate.convertAndSendToUser(
+                        updatedRoom.getHost().getUsername(),
+                        "/queue/errors",
+                        GENERATION_UNAVAILABLE_MESSAGE
+                );
+                log.warn("BROADCAST: Sent FAILED generation notification for room {}", updatedRoom.getRoomCode());
+                return;
+            }
 
-            log.info("BROADCAST: Sent updated GameRoomDto to room {}", updatedRoom.getRoomCode());
+            log.warn("Ignoring quiz result with unsupported status '{}' for room {}", message.getStatus(), message.getRoomCode());
 
         } catch (Exception e) {
             log.warn("ERROR: Failed to process quiz results for room {}", message.getRoomCode(), e);
         }
+    }
+
+    private void broadcastUpdatedRoom(GameRoom updatedRoom) {
+        GameRoomDto roomDto = gameMapper.toDto(updatedRoom);
+        messagingTemplate.convertAndSend(
+                "/topic/room/" + updatedRoom.getRoomCode(),
+                roomDto
+        );
     }
 }

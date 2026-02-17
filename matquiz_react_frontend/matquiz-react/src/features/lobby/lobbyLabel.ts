@@ -2,6 +2,7 @@
  * Computes lobby header labels and actions from game phase + role.
  * Keeps UI text centralized and easy to update to match Figma.
  */
+import type { GameStatus } from "@/types/api"
 
 export type LobbyPhase =
   | "CREATING"
@@ -29,6 +30,22 @@ export type LobbyLabelOutput = {
   tone: LobbyTone
   actions: LobbyAction[]
   hideProfileMenu: boolean
+}
+
+export const mapGameStatusToLobbyPhase = (status?: GameStatus): LobbyPhase => {
+  switch (status) {
+    case "GENERATING":
+      return "GENERATING"
+    case "READY":
+      return "READY"
+    case "PLAYING":
+      return "PLAYING"
+    case "FINISHED":
+      return "RESULTS"
+    case "WAITING":
+    default:
+      return "WAITING"
+  }
 }
 
 const baseActions = (isHost: boolean, phase: LobbyPhase): LobbyAction[] => {

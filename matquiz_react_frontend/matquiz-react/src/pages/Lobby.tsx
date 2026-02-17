@@ -11,7 +11,6 @@ import { useAppDispatch, useAppSelector } from "@/app/hooks"
 import InfoModal from "@/components/InfoModal"
 import { useGetSessionQuery } from "@/features/auth/api/authApiSlice"
 import {
-  useEndResultsMutation,
   useGenerateQuizMutation,
   useRequestQuestionMutation,
   useStartGameMutation,
@@ -26,110 +25,31 @@ import {
 import LobbyHostSetupView from "@/features/lobby/components/LobbyHostSetupView"
 import LobbyPlayerWaitingView from "@/features/lobby/components/LobbyPlayerWaitingView"
 import LobbyRuntimeView from "@/features/lobby/components/LobbyRuntimeView"
-import { resolveLobbyLabel, type LobbyPhase } from "@/features/lobby/lobbyLabel"
+import {
+  mapGameStatusToLobbyPhase,
+  resolveLobbyLabel,
+} from "@/features/lobby/lobbyLabel"
+import {
+  AUTO_NEXT_SECONDS,
+  GENERATING_FACTS,
+  MANUAL_NEXT_FALLBACK_SECONDS,
+  MAX_TOPIC_LENGTH,
+  QUESTION_SECONDS,
+  REVEAL_VISIBILITY_DELAY_MS,
+  SKIP_COUNTDOWN_SECONDS,
+  START_COUNTDOWN_SECONDS,
+} from "@/features/lobby/lobbyConstants"
+import {
+  buildSlots,
+  capitalizeFirstLetter,
+  normalizeTopic,
+  parseSocketError,
+  rankPlayers,
+} from "@/features/lobby/lobbyUtils"
 import type { RankedPlayer, RuntimeStage } from "@/features/lobby/runtimeTypes"
 import { ROUTES } from "@/routes/paths"
-import type { Difficulty, GamePlayerDto, GameStatus, QuestionDto } from "@/types/api"
+import type { Difficulty, QuestionDto } from "@/types/api"
 import styles from "./Lobby.module.css"
-
-const MAX_TOPIC_LENGTH = 30
-const START_COUNTDOWN_SECONDS = 5
-const QUESTION_SECONDS = 30
-const REVEAL_VISIBILITY_DELAY_MS = 1000
-const AUTO_NEXT_SECONDS = 8
-const MANUAL_NEXT_FALLBACK_SECONDS = 10
-const SKIP_COUNTDOWN_SECONDS = 4
-const END_RESULTS_DELAY_MS = 5000
-const GENERATING_FACTS = [
-  "A day on Venus is longer than a Venus year.",
-  "Octopuses have three hearts and blue blood.",
-  "Bananas are berries, but strawberries are not.",
-  "Honey does not spoil when kept sealed.",
-  "The Eiffel Tower grows taller in summer heat.",
-] as const
-
-const mapStatusToPhase = (status?: GameStatus): LobbyPhase => {
-  switch (status) {
-    case "GENERATING":
-      return "GENERATING"
-    case "READY":
-      return "READY"
-    case "PLAYING":
-      return "PLAYING"
-    case "FINISHED":
-      return "RESULTS"
-    case "WAITING":
-    default:
-      return "WAITING"
-  }
-}
-
-const buildSlots = (players: GamePlayerDto[], count: number) => {
-  const slots: (GamePlayerDto | null)[] = []
-  for (let index = 0; index < count; index += 1) {
-    slots.push(players[index] ?? null)
-  }
-  return slots
-}
-
-const stripControlChars = (value: string) =>
-  Array.from(value)
-    .map(char => {
-      const code = char.charCodeAt(0)
-      if (code < 32 || code === 127) {
-        return " "
-      }
-      return char
-    })
-    .join("")
-
-const normalizeTopic = (value: string) =>
-  stripControlChars(value)
-    .replace(/\s+/g, " ")
-    .trim()
-
-const capitalizeFirstLetter = (value: string) => {
-  if (!value) {
-    return value
-  }
-  return `${value.charAt(0).toUpperCase()}${value.slice(1)}`
-}
-
-const parseSocketError = (value: unknown, fallback: string) => {
-  if (typeof value === "object" && value !== null) {
-    const maybeError = value as { error?: string; data?: unknown }
-    if (typeof maybeError.error === "string") {
-      return maybeError.error
-    }
-    if (typeof maybeError.data === "string") {
-      return maybeError.data
-    }
-  }
-  return fallback
-}
-
-const rankPlayers = (players: GamePlayerDto[]): RankedPlayer[] => {
-  const sorted = [...players].sort((left, right) => {
-    if (right.score === left.score) {
-      return left.nickname.localeCompare(right.nickname)
-    }
-    return right.score - left.score
-  })
-
-  let activeRank = 0
-  let previousScore: number | null = null
-
-  return sorted.map((player, index) => {
-    if (previousScore === null || player.score < previousScore) {
-      activeRank = index + 1
-      previousScore = player.score
-    }
-    return {
-      player,
-      rank: activeRank,
-    }
-  })
-}
 
 const Lobby = () => {
   const navigate = useNavigate()
@@ -154,8 +74,6 @@ const Lobby = () => {
   const [requestQuestion, { isLoading: isRequestingQuestion }] =
     useRequestQuestionMutation()
   const [submitAnswer] = useSubmitAnswerMutation()
-  const [endResults, { isLoading: isFetchingEndResults }] =
-    useEndResultsMutation()
 
   const [topic, setTopic] = useState("")
   const [difficulty, setDifficulty] = useState<Difficulty>("EASY")
@@ -185,7 +103,6 @@ const Lobby = () => {
   const generationFactRef = useRef<string | null>(null)
   const startFlowTriggeredRef = useRef(false)
   const autoNextRequestedForQuestionIdRef = useRef<number | null>(null)
-  const autoEndResultsRequestedRef = useRef(false)
   const revealDelayTimeoutRef = useRef<number | null>(null)
 
   const room = streamedRoom ?? activeRoomSnapshot
@@ -440,7 +357,21 @@ const Lobby = () => {
     }
 
     if (isRoomFinished) {
-      setStage(results ? "RESULTS" : "FINISHED")
+      const hasFinalQuestion = displayedQuestion !== null
+      const finalQuestionRevealed =
+        hasFinalQuestion &&
+        revealedQuestionId === displayedQuestion.questionId
+      const finalRevealDelayCompleted =
+        stage === "REVEAL" && revealElapsed >= AUTO_NEXT_SECONDS
+      const shouldKeepRuntimeStage =
+        hasFinalQuestion &&
+        (!finalQuestionRevealed || !finalRevealDelayCompleted)
+
+      if (shouldKeepRuntimeStage) {
+        return
+      }
+
+      setStage("RESULTS")
       return
     }
 
@@ -458,8 +389,14 @@ const Lobby = () => {
     setRevealElapsed(0)
     startFlowTriggeredRef.current = false
     autoNextRequestedForQuestionIdRef.current = null
-    autoEndResultsRequestedRef.current = false
-  }, [isRoomFinished, isRoomPlaying, results, stage])
+  }, [
+    displayedQuestion,
+    isRoomFinished,
+    isRoomPlaying,
+    revealElapsed,
+    revealedQuestionId,
+    stage,
+  ])
 
   useEffect(() => {
     if (!isRoomPlaying || displayedQuestion || pendingQuestion) {
@@ -669,31 +606,6 @@ const Lobby = () => {
   ])
 
   useEffect(() => {
-    if (!isRoomFinished || !isHost || !!results || !roomCode) {
-      return
-    }
-    if (autoEndResultsRequestedRef.current) {
-      return
-    }
-
-    const timer = window.setTimeout(() => {
-      autoEndResultsRequestedRef.current = true
-      void endResults({ roomCode })
-        .unwrap()
-        .catch((error: unknown) => {
-          autoEndResultsRequestedRef.current = false
-          setModalMessage(
-            parseSocketError(error, "Could not request final results."),
-          )
-        })
-    }, END_RESULTS_DELAY_MS)
-
-    return () => {
-      window.clearTimeout(timer)
-    }
-  }, [endResults, isHost, isRoomFinished, results, roomCode])
-
-  useEffect(() => {
     if (stage !== "RESULTS") {
       return
     }
@@ -722,7 +634,7 @@ const Lobby = () => {
       return "Game finished. Preparing final results..."
     }
 
-    const phase = mapStatusToPhase(room?.status)
+    const phase = mapGameStatusToLobbyPhase(room?.status)
     return resolveLobbyLabel({
       isHost,
       phase,
@@ -849,7 +761,6 @@ const Lobby = () => {
               answeredPlayerNames={answeredPlayerNames}
               displayRoomCode={displayRoomCode}
               yourScore={yourScore}
-              isFetchingEndResults={isFetchingEndResults}
               onSelectAnswer={setSelectedAnswerIndex}
               onLockAnswer={handleLockAnswer}
               onManualNext={handleManualNext}

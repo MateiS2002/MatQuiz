@@ -283,13 +283,7 @@ public class GameService {
 
     @Transactional
     public void processReveal(String roomCode, Long questionId) {
-        GameRoom room = new GameRoom();
-
-        try{
-            room = fetchFullRoom(roomCode);
-        } catch (Exception e){
-           return;
-        }
+        GameRoom room = fetchFullRoom(roomCode);
 
         LocalDateTime now = LocalDateTime.now();
 
@@ -405,7 +399,6 @@ public class GameService {
             throw new IllegalArgumentException("Topic cannot be longer than 30 characters!");
         }
 
-        //TODO: Implement quiz generation timeout
         scheduleQuizGenerationCheck(request.getRoomCode());
 
         room.setTopic(request.getTopic());
@@ -452,6 +445,23 @@ public class GameService {
                 questionEntities.size(), room.getRoomCode());
 
         return fetchFullRoom(room.getRoomCode());
+    }
+
+    @Transactional
+    public GameRoom handleQuizGenerationFailure(String roomCode, String errorMessage) {
+        GameRoom room = gameRoomRepository.findByRoomCode(roomCode)
+                .orElseThrow(() -> new IllegalArgumentException("Room not found"));
+
+        if (room.getStatus() != GameStatus.GENERATING) {
+            throw new IllegalStateException("The room can only fail generation from GENERATING state!");
+        }
+
+        room.setStatus(GameStatus.WAITING);
+        gameRoomRepository.save(room);
+
+        log.warn("Quiz generation failed for room {}: {}", roomCode, errorMessage);
+
+        return fetchFullRoom(roomCode);
     }
 
     @Transactional

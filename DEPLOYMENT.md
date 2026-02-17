@@ -5,7 +5,7 @@ This project is prepared for Coolify auto-deploy from Git using `docker-compose.
 The stack includes:
 - `frontend` (React static app on port `3000`)
 - `backend` (Spring Boot API + WebSocket on port `8080`)
-- `ai-worker` (Python worker)
+- `ai-service` (Spring Boot AI worker)
 - `postgres-db`
 - `rabbitmq`
 
@@ -43,8 +43,7 @@ Use `.env.prod.example` as reference and set these in Coolify:
 - `SECURITY_SECRET`
 - `SECURITY_VALIDITY`
 - `APP_CORS_ALLOWED_ORIGINS` (frontend domain, ex: `https://matquiz.example.com`)
-- `GEMINI_API_KEY`
-- `MAX_PROCESS_RETRIES`
+- `OPENAI_API_KEY`
 - `VITE_API_URL` (ex: `https://api-matquiz.example.com/api`)
 - `VITE_WS_URL` (ex: `https://api-matquiz.example.com/ws`)
 

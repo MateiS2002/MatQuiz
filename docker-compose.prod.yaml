@@ -55,21 +55,21 @@ services:
     ports:
       - "127.0.0.1:8080:8080"
 
-  ai-worker:
+  ai-service:
     build:
-      context: ./matquiz_python_ai_service
+      context: ./matquiz-ai-service-java
       dockerfile: Dockerfile
     restart: unless-stopped
     depends_on:
       rabbitmq:
         condition: service_healthy
     environment:
-      GEMINI_API_KEY: ${GEMINI_API_KEY:?GEMINI_API_KEY must be set}
-      RABBITMQ_HOST: rabbitmq
-      RABBITMQ_PORT: 5672
-      RABBITMQ_USER: ${RABBITMQ_USER:-admin}
+      OPENAI_API_KEY: ${OPENAI_API_KEY:?OPENAI_API_KEY must be set}
+      RABBITMQ_USERNAME: ${RABBITMQ_USER:-admin}
       RABBITMQ_PASSWORD: ${RABBITMQ_PASSWORD:-admin}
-      MAX_PROCESS_RETRIES: ${MAX_PROCESS_RETRIES:-3}
+      SPRING_RABBITMQ_HOST: rabbitmq
+      SPRING_RABBITMQ_PORT: 5672
+      SPRING_PROFILES_ACTIVE: prod
 
   frontend:
     build:

@@ -39,7 +39,6 @@ type LobbyRuntimeViewProps = {
   answeredPlayerNames: string[]
   displayRoomCode: string
   yourScore: number
-  isFetchingEndResults: boolean
   onSelectAnswer: (index: number) => void
   onLockAnswer: () => void
   onManualNext: () => void
@@ -71,7 +70,6 @@ const LobbyRuntimeView = ({
   answeredPlayerNames,
   displayRoomCode,
   yourScore,
-  isFetchingEndResults,
   onSelectAnswer,
   onLockAnswer,
   onManualNext,
@@ -93,8 +91,7 @@ const LobbyRuntimeView = ({
     if (entry.player.nickname === hostName) {
       return false
     }
-    return entry.player.nickname !== userName;
-
+    return entry.player.nickname !== userName
   })
   const resultsLeftSlots: ResultsCardSlot[] = isHost
     ? [
@@ -419,15 +416,7 @@ const LobbyRuntimeView = ({
 
     return (
       <section className={styles.stageCard}>
-        <h2 className={styles.stageTitle}>Game finished</h2>
-        <p className={styles.stageSubtitle}>
-          {isHost
-            ? "Fetching final results in 5 seconds..."
-            : "Waiting for host to request final results..."}
-        </p>
-        {isHost && isFetchingEndResults ? (
-          <p className={styles.stageSubtitle}>Requesting final results...</p>
-        ) : null}
+        <h2 className={styles.stageTitle}>Preparing game state...</h2>
       </section>
     )
   }

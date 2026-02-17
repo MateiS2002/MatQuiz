@@ -70,6 +70,20 @@ const parseRoomStream = (body: string): RoomStreamMessage => {
 
 const parseText = (body: string) => body
 
+const normalizeRealtimeError = (message: string): string => {
+  const trimmed = message.trim()
+  if (!trimmed) {
+    return "An unexpected server error occurred."
+  }
+  if (trimmed.startsWith("Generation failed:")) {
+    return trimmed
+  }
+  if (trimmed.toLowerCase().includes("timed out")) {
+    return "Quiz generation timed out. Please try again."
+  }
+  return trimmed
+}
+
 const isRecord = (value: unknown): value is Record<string, unknown> =>
   typeof value === "object" && value !== null
 
@@ -194,7 +208,7 @@ export const gameApi = baseApi.injectEndpoints({
           )
           unsubscribers.push(
             await subscribe("/user/queue/errors", parseText, payload => {
-              dispatch(setLastError(payload))
+              dispatch(setLastError(normalizeRealtimeError(payload)))
             }),
           )
           unsubscribers.push(

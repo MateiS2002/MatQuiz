@@ -26,7 +26,7 @@ public class QuizTimeoutService {
         GameRoom updatedRoom = roomRepository.findByRoomCode(roomCode).orElseThrow();
 
         if (updatedRoom.getStatus() != GameStatus.GENERATING) {
-            log.info("CHECK TIMEOUT: Quiz generated succesfully for room{}", roomCode);
+            log.info("CHECK TIMEOUT: Quiz generated succesfully for room{} or error message broadcasted", roomCode);
             return;
         }
 

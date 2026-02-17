@@ -6,7 +6,6 @@ export type RuntimeStage =
   | "QUESTION"
   | "SKIP_COUNTDOWN"
   | "REVEAL"
-  | "FINISHED"
   | "RESULTS"
 
 export type RankedPlayer = {
