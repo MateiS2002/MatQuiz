@@ -43,7 +43,7 @@ public class GameService {
 
     private static final int MAX_PLAYERS = 5;
     private static final long GAME_FINISH_TIMEOUT_MS = 35000; // 35 seconds: 30s question time + 5s buffer
-    private static final long QUIZ_GENERATION_TIMEOUT = 35000; // 35 seconds
+    private static final long QUIZ_GENERATION_TIMEOUT = 45000; // 45 seconds still needs some optimization
 
 
     /**

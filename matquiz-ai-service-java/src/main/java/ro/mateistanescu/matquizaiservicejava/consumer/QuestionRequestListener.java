@@ -25,7 +25,10 @@ public class QuestionRequestListener {
     private final QuizGenerationService quizGenerationService;
     private final RabbitTemplate rabbitTemplate;
 
-    @RabbitListener(queues = RabbitMqConfig.QUIZ_GENERATION_QUEUE)
+    @RabbitListener(
+            queues = RabbitMqConfig.QUIZ_GENERATION_QUEUE,
+            concurrency = "${RABBIT_LISTENER_CONCURRENCY:4}-${RABBIT_LISTENER_MAX_CONCURRENCY:12}"
+    )
     public void receiveQuestionGenerationRequest(QuizGenerationPayload payload){
         log.info("Received: Generation request for room {} with topic {} and difficulty {}",
                 payload.getRoomCode(), payload.getTopic(), payload.getDifficulty());
