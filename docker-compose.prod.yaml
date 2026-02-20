@@ -17,8 +17,8 @@ services:
 
   backup-uploader:
     image: rclone/rclone:1.69
-    restart: unless-stopped
-    command: [ "sleep", "infinity" ]
+    entrypoint: [ "/bin/sh", "-c" ]
+    command: [ "sleep infinity" ]
     volumes:
       - pg_data:/pgdata:ro
     environment:
