@@ -15,6 +15,17 @@ services:
       retries: 10
       start_period: 15s
 
+  backup-uploader:
+    image: rclone/rclone:1.69
+    restart: unless-stopped
+    command: [ "sleep", "infinity" ]
+    volumes:
+      - pg_data:/pgdata:ro
+    environment:
+      RCLONE_CONFIG_GDRIVE_TYPE: drive
+      RCLONE_CONFIG_GDRIVE_SCOPE: drive.file
+      RCLONE_CONFIG_GDRIVE_TOKEN: ${RCLONE_CONFIG_GDRIVE_TOKEN:?must be set}
+
   rabbitmq:
     image: rabbitmq:3.13-management-alpine
     restart: unless-stopped
