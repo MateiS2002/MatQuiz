@@ -25,6 +25,12 @@ services:
       RCLONE_CONFIG_GDRIVE_TYPE: drive
       RCLONE_CONFIG_GDRIVE_SCOPE: drive.file
       RCLONE_CONFIG_GDRIVE_TOKEN: ${RCLONE_CONFIG_GDRIVE_TOKEN:?must be set}
+    healthcheck:
+      test: [ "CMD-SHELL", "test -d /pgdata/backups && rclone lsf gdrive:MatQuizBackups --max-depth 1 >/dev/null 2>&1" ]
+      interval: 15m
+      timeout: 20s
+      retries: 3
+      start_period: 30s
 
   rabbitmq:
     image: rabbitmq:3.13-management-alpine
