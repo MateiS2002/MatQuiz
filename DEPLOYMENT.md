@@ -43,6 +43,9 @@ Use `.env.prod.example` as reference and set these in Coolify:
 - `SECURITY_SECRET`
 - `SECURITY_VALIDITY`
 - `APP_CORS_ALLOWED_ORIGINS` (frontend domain, ex: `https://matquiz.example.com`)
+- `RESEND_API_KEY`
+- `RESEND_FROM` (example: `"MatQuiz <contact@matquiz.mateistanescu.ro>"`)
+- `RESEND_TO` (destination inbox for contact messages)
 - `OPENAI_API_KEY`
 - `VITE_API_URL` (ex: `https://api-matquiz.example.com/api`)
 - `VITE_WS_URL` (ex: `https://api-matquiz.example.com/ws`)

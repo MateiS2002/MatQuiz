@@ -3,6 +3,7 @@ import type { SyntheticEvent } from "react"
 import { Link } from "react-router-dom"
 import { useLocation, useNavigate } from "react-router-dom"
 import { useLoginMutation } from "@/features/auth/api/authApiSlice"
+import { parseApiErrorMessage } from "@/utils/apiError"
 import styles from "./Login.module.css"
 import { ROUTES, type RoutePath } from "@/routes/paths"
 
@@ -18,6 +19,9 @@ const Login = () => {
   const [password, setPassword] = useState("")
 
   const from = (location.state as LocationState | null)?.from ?? ROUTES.home
+  const loginErrorMessage = error
+    ? parseApiErrorMessage(error, "Login failed. Check your credentials.")
+    : null
 
   const handleSubmit = async (event: SyntheticEvent<HTMLFormElement>) => {
     event.preventDefault()
@@ -69,9 +73,9 @@ const Login = () => {
                 required
               />
             </label>
-            {error ? (
+            {loginErrorMessage ? (
               <p className={styles.error}>
-                Login failed. Check your credentials.
+                {loginErrorMessage}
               </p>
             ) : null}
           </form>

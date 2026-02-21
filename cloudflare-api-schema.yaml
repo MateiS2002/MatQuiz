@@ -1,0 +1,461 @@
+openapi: 3.0.3
+info:
+  title: MatQuiz Backend REST API
+  version: 1.0.0
+  description: OpenAPI schema for Cloudflare API Schema Validation on production REST endpoints.
+servers:
+  - url: https://api.mateistanescu.ro
+    description: URL of production environment.
+security:
+  - bearerAuth: []
+tags:
+  - name: Authentication
+  - name: Profile
+  - name: Health
+paths:
+  /actuator/health:
+    get:
+      tags:
+        - Health
+      summary: Health endpoint
+      operationId: getHealth
+      security: []
+      responses:
+        "200":
+          description: Service health payload
+          content:
+            application/json:
+              schema:
+                type: object
+                additionalProperties: true
+  /api/auth/login:
+    post:
+      tags:
+        - Authentication
+      summary: Authenticate and return access token
+      operationId: login
+      security: []
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: "#/components/schemas/UserLoginRequest"
+      responses:
+        "200":
+          description: Access token
+          content:
+            text/plain:
+              schema:
+                type: string
+        "400":
+          description: Invalid request payload
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/ErrorResponse"
+        "401":
+          description: Invalid credentials
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/ErrorResponse"
+  /api/auth/register:
+    post:
+      tags:
+        - Authentication
+      summary: Register a new user
+      operationId: register
+      security: []
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: "#/components/schemas/UserRegisterRequest"
+      responses:
+        "201":
+          description: Registration created
+          content:
+            application/json:
+              schema:
+                type: boolean
+        "400":
+          description: Invalid request payload
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/ErrorResponse"
+        "409":
+          description: Username or email conflict
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/ErrorResponse"
+  /api/auth/whoami:
+    get:
+      tags:
+        - Authentication
+      summary: Return current authenticated principal info
+      operationId: whoami
+      responses:
+        "200":
+          description: Authenticated identity string
+          content:
+            text/plain:
+              schema:
+                type: string
+        "401":
+          description: Unauthorized
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/ErrorResponse"
+  /api/auth/leaderboard:
+    get:
+      tags:
+        - Authentication
+      summary: Return full leaderboard
+      operationId: getLeaderboard
+      responses:
+        "200":
+          description: Leaderboard entries
+          content:
+            application/json:
+              schema:
+                type: array
+                items:
+                  $ref: "#/components/schemas/LeaderboardEntry"
+        "401":
+          description: Unauthorized
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/ErrorResponse"
+    post:
+      tags:
+        - Authentication
+      summary: Return leaderboard entry for a specific username
+      operationId: getLeaderboardForUser
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: "#/components/schemas/LeaderboardRequest"
+      responses:
+        "200":
+          description: Filtered leaderboard entries
+          content:
+            application/json:
+              schema:
+                type: array
+                items:
+                  $ref: "#/components/schemas/LeaderboardEntry"
+        "400":
+          description: Invalid request payload
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/ErrorResponse"
+        "401":
+          description: Unauthorized
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/ErrorResponse"
+  /api/auth/active:
+    get:
+      tags:
+        - Authentication
+      summary: Return whether user has an active game
+      operationId: getActiveGame
+      responses:
+        "200":
+          description: Active game status
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/ActiveGameResponse"
+        "401":
+          description: Unauthorized
+  /api/auth/setProfilePicture:
+    patch:
+      tags:
+        - Profile
+      summary: Update user avatar URL
+      operationId: setProfilePicture
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: "#/components/schemas/SetProfilePictureRequest"
+      responses:
+        "200":
+          description: Updated user profile
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/UserSummary"
+        "400":
+          description: Invalid request payload
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/ErrorResponse"
+        "401":
+          description: Unauthorized
+  /api/auth/changeUsername:
+    patch:
+      tags:
+        - Profile
+      summary: Change username and return refreshed session token
+      operationId: changeUsername
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: "#/components/schemas/ChangeUsernameRequest"
+      responses:
+        "200":
+          description: Refreshed session and profile
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/SessionRefreshResponse"
+        "400":
+          description: Invalid request payload
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/ErrorResponse"
+        "401":
+          description: Unauthorized
+  /api/auth/changeEmail:
+    patch:
+      tags:
+        - Profile
+      summary: Change email and return refreshed session token
+      operationId: changeEmail
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: "#/components/schemas/ChangeEmailRequest"
+      responses:
+        "200":
+          description: Refreshed session and profile
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/SessionRefreshResponse"
+        "400":
+          description: Invalid request payload
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/ErrorResponse"
+        "401":
+          description: Unauthorized
+  /api/auth/changePassword:
+    patch:
+      tags:
+        - Profile
+      summary: Change password and return refreshed session token
+      operationId: changePassword
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: "#/components/schemas/ChangePasswordRequest"
+      responses:
+        "200":
+          description: Refreshed session and profile
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/SessionRefreshResponse"
+        "400":
+          description: Invalid request payload
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/ErrorResponse"
+        "401":
+          description: Unauthorized
+  /api/auth/session:
+    get:
+      tags:
+        - Authentication
+      summary: Return user profile from current session token
+      operationId: getSession
+      responses:
+        "200":
+          description: Current user profile
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/UserSummary"
+        "401":
+          description: Unauthorized
+components:
+  securitySchemes:
+    bearerAuth:
+      type: http
+      scheme: bearer
+      bearerFormat: JWT
+  schemas:
+    UserLoginRequest:
+      type: object
+      additionalProperties: false
+      required:
+        - username
+        - password
+      properties:
+        username:
+          type: string
+          minLength: 1
+        password:
+          type: string
+          minLength: 1
+    UserRegisterRequest:
+      type: object
+      additionalProperties: false
+      required:
+        - username
+        - email
+        - password
+      properties:
+        username:
+          type: string
+          minLength: 3
+          maxLength: 30
+        email:
+          type: string
+          format: email
+          maxLength: 100
+        password:
+          type: string
+          minLength: 8
+          maxLength: 72
+    LeaderboardRequest:
+      type: object
+      additionalProperties: false
+      properties:
+        username:
+          type: string
+          minLength: 1
+    SetProfilePictureRequest:
+      type: object
+      additionalProperties: false
+      required:
+        - avatarUrl
+      properties:
+        avatarUrl:
+          type: string
+          minLength: 1
+    ChangeUsernameRequest:
+      type: object
+      additionalProperties: false
+      required:
+        - newUsername
+      properties:
+        newUsername:
+          type: string
+          minLength: 3
+          maxLength: 30
+    ChangeEmailRequest:
+      type: object
+      additionalProperties: false
+      required:
+        - newEmail
+      properties:
+        newEmail:
+          type: string
+          format: email
+          maxLength: 100
+    ChangePasswordRequest:
+      type: object
+      additionalProperties: false
+      required:
+        - currentPassword
+        - newPassword
+      properties:
+        currentPassword:
+          type: string
+          minLength: 1
+          maxLength: 255
+        newPassword:
+          type: string
+          minLength: 8
+          maxLength: 72
+    ActiveGameResponse:
+      type: object
+      additionalProperties: false
+      required:
+        - hasActiveGame
+      properties:
+        hasActiveGame:
+          type: boolean
+    LeaderboardEntry:
+      type: object
+      additionalProperties: false
+      properties:
+        rank:
+          type: integer
+          format: int64
+        username:
+          type: string
+        eloRating:
+          type: integer
+          format: int32
+    SessionRefreshResponse:
+      type: object
+      additionalProperties: false
+      required:
+        - accessToken
+        - user
+      properties:
+        accessToken:
+          type: string
+          minLength: 1
+        user:
+          $ref: "#/components/schemas/UserSummary"
+    UserSummary:
+      type: object
+      additionalProperties: false
+      properties:
+        id:
+          type: integer
+          format: int64
+        username:
+          type: string
+        email:
+          type: string
+          format: email
+        role:
+          type: string
+          enum:
+            - ROLE_USER
+            - ROLE_ADMIN
+        eloRating:
+          type: integer
+          format: int32
+        lastGamePoints:
+          type: integer
+          format: int32
+        avatarUrl:
+          type: string
+          nullable: true
+    ErrorResponse:
+      type: object
+      additionalProperties: false
+      required:
+        - message
+      properties:
+        message:
+          type: string

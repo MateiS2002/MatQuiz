@@ -17,6 +17,7 @@ import org.springframework.security.web.authentication.UsernamePasswordAuthentic
 import org.springframework.web.cors.CorsConfiguration;
 import org.springframework.web.cors.CorsConfigurationSource;
 import org.springframework.web.cors.UrlBasedCorsConfigurationSource;
+import ro.mateistanescu.matquizspringbootbackend.filter.GlobalRateLimitFilter;
 import ro.mateistanescu.matquizspringbootbackend.filter.JwtFilter;
 import ro.mateistanescu.matquizspringbootbackend.handlers.AuthExceptionHandler;
 
@@ -31,6 +32,7 @@ public class SecurityConfig {
     private String allowedOrigins;
 
     private final JwtFilter jwtFilter;
+    private final GlobalRateLimitFilter globalRateLimitFilter;
     private final AccessDeniedHandler accessDeniedHandler;
     private final AuthExceptionHandler authExceptionHandler;
 
@@ -52,6 +54,7 @@ public class SecurityConfig {
                         .anyRequest().authenticated())
                 .sessionManagement(session ->
                         session.sessionCreationPolicy(SessionCreationPolicy.STATELESS))
+                .addFilterBefore(globalRateLimitFilter, UsernamePasswordAuthenticationFilter.class)
                 .addFilterBefore(jwtFilter, UsernamePasswordAuthenticationFilter.class)
                 .exceptionHandling(exception -> exception
                         .authenticationEntryPoint(authExceptionHandler)

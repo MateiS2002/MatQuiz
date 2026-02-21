@@ -31,6 +31,8 @@
         <logback.version>1.5.25</logback.version>
         <assertj.version>3.27.7</assertj.version>
         <commons-compress.version>1.28.0</commons-compress.version>
+        <okio.version>3.4.0</okio.version>
+        <bucket4j.version>8.16.1</bucket4j.version>
     </properties>
     <dependencies>
         <dependency>
@@ -119,6 +121,21 @@
             <artifactId>commons-compress</artifactId>
             <version>${commons-compress.version}</version>
             <scope>test</scope>
+        </dependency>
+        <dependency>
+            <groupId>com.resend</groupId>
+            <artifactId>resend-java</artifactId>
+            <version>LATEST</version>
+        </dependency>
+        <dependency>
+            <groupId>com.squareup.okio</groupId>
+            <artifactId>okio-jvm</artifactId>
+            <version>${okio.version}</version>
+        </dependency>
+        <dependency>
+            <groupId>com.bucket4j</groupId>
+            <artifactId>bucket4j_jdk17-core</artifactId>
+            <version>${bucket4j.version}</version>
         </dependency>
     </dependencies>
 

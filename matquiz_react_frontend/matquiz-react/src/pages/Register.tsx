@@ -2,27 +2,9 @@ import { useState } from "react"
 import type { SyntheticEvent } from "react"
 import { Link, useNavigate } from "react-router-dom"
 import { useRegisterMutation } from "@/features/auth/api/authApiSlice"
+import { parseApiErrorMessage } from "@/utils/apiError"
 import styles from "./Register.module.css"
 import { ROUTES } from "@/routes/paths"
-
-const parseRegisterError = (value: unknown) => {
-  if (typeof value === "object" && value !== null) {
-    const maybeError = value as { data?: unknown; error?: string }
-    if (typeof maybeError.data === "string") {
-      return maybeError.data
-    }
-    if (typeof maybeError.data === "object" && maybeError.data !== null) {
-      const maybeData = maybeError.data as { message?: string }
-      if (typeof maybeData.message === "string") {
-        return maybeData.message
-      }
-    }
-    if (typeof maybeError.error === "string") {
-      return maybeError.error
-    }
-  }
-  return "Register failed. Please try again."
-}
 
 const Register = () => {
   const navigate = useNavigate()
@@ -47,7 +29,9 @@ const Register = () => {
 
   const passwordsMatch =
     password === confirmPassword || confirmPassword.length === 0
-  const registerErrorMessage = error ? parseRegisterError(error) : null
+  const registerErrorMessage = error
+    ? parseApiErrorMessage(error, "Register failed. Please try again.")
+    : null
 
   return (
     <div className={styles.register}>

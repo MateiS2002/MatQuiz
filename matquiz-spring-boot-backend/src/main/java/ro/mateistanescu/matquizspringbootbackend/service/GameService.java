@@ -597,6 +597,9 @@ public class GameService {
         }
 
         room.setStatus(GameStatus.FINISHED);
+
+        log.info("Game ended early for room {}", room.getRoomCode());
+
         gameRoomRepository.save(room);
     }
 

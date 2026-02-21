@@ -30,6 +30,25 @@ const rawBaseQuery = fetchBaseQuery({
   },
 })
 
+const parsePositiveIntHeader = (headers: Headers, name: string) => {
+  const rawValue = headers.get(name)
+  if (!rawValue) {
+    return null
+  }
+  const parsed = Number.parseInt(rawValue, 10)
+  if (!Number.isFinite(parsed) || parsed < 0) {
+    return null
+  }
+  return parsed
+}
+
+const buildRateLimitMessage = (retryAfterSeconds: number | null) => {
+  if (retryAfterSeconds === null || retryAfterSeconds <= 0) {
+    return "Too many requests. Please try again shortly."
+  }
+  return `Too many requests. Try again in ${retryAfterSeconds}s.`
+}
+
 const baseQueryWithAuth: BaseQueryFn<
   string | FetchArgs,
   unknown,
@@ -38,6 +57,31 @@ const baseQueryWithAuth: BaseQueryFn<
   const stateBefore = api.getState() as { auth?: { token?: string | null } }
   const tokenUsedForRequest = stateBefore.auth?.token ?? null
   const result = await rawBaseQuery(args, api, extraOptions)
+
+  if (result.error?.status === 429) {
+    const headers = result.meta?.response?.headers
+    if (headers) {
+      const retryAfterSeconds = parsePositiveIntHeader(headers, "Retry-After")
+      const rateLimitLimit = parsePositiveIntHeader(headers, "RateLimit-Limit")
+      const rateLimitRemaining = parsePositiveIntHeader(headers, "RateLimit-Remaining")
+      const rateLimitReset = parsePositiveIntHeader(headers, "RateLimit-Reset")
+      const existingData =
+        typeof result.error.data === "object" && result.error.data !== null
+          ? (result.error.data as { message?: string })
+          : null
+
+      result.error = {
+        ...result.error,
+        data: {
+          message: existingData?.message ?? buildRateLimitMessage(retryAfterSeconds),
+          retryAfterSeconds,
+          rateLimitLimit,
+          rateLimitRemaining,
+          rateLimitReset,
+        },
+      }
+    }
+  }
 
   if (result.error?.status === 401) {
     const stateAfter = api.getState() as { auth?: { token?: string | null } }

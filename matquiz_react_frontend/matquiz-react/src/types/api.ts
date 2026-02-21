@@ -20,6 +20,19 @@ export type RegisterRequest = {
   email: string
 }
 
+export type ContactEmailRequest = {
+  email: string
+  nickname: string
+  topic: string
+  message: string
+  appVersion: string
+}
+
+export type ContactEmailResponse = {
+  message: string
+  emailId?: string
+}
+
 export type SetProfilePictureRequest = {
   avatarUrl: string
 }

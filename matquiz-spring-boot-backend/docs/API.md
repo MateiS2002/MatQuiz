@@ -471,6 +471,77 @@ All game-related communication happens via **STOMP over WebSockets**.
 
 ---
 
+## REST Contact Email
+**Base URL:** `/api/email`
+
+### 1. Send Contact Email
+- **Endpoint:** `POST /api/email/send`
+- **Headers:** `Authorization: Bearer <JWT_TOKEN>`
+- **Payload:**
+  ```json
+  {
+    "email": "john.doe@google.com",
+    "nickname": "john_doe",
+    "topic": "Bug report",
+    "message": "I found a display issue in leaderboard sorting.",
+    "appVersion": "0.1.0"
+  }
+  ```
+- **Success Response:** `200 OK`
+  ```json
+  {
+    "message": "Email sent successfully.",
+    "emailId": "c4f2e1c5-0cc8-4f1a-8fa4-xxxxxxxxxxxx"
+  }
+  ```
+- **Validation/Security Rules:**
+  - Request requires authenticated user.
+  - `email` and `nickname` must match the authenticated user's DB values.
+  - `replyTo` is always set from authenticated user's email.
+- **Error Responses:**
+  - `400 Bad Request` (identity mismatch or validation failure)
+    ```json
+    {
+      "message": "Request email does not match the authenticated account."
+    }
+    ```
+  - `429 Too Many Requests` (email endpoint-specific limiter)
+    - Headers:
+      - `EmailRateLimit-Limit: 1`
+      - `EmailRateLimit-Remaining: 0`
+      - `EmailRateLimit-Reset: <seconds>`
+      - `Retry-After: <seconds>`
+    - Body:
+      ```json
+      {
+        "message": "You can send only one contact message per minute."
+      }
+      ```
+  - `503 Service Unavailable` (email provider/config issue)
+    ```json
+    {
+      "message": "Email delivery failed. Please try again later."
+    }
+    ```
+
+---
+
+## Rate Limiting
+All limits are currently applied per client IP unless specified otherwise.
+
+- **Global API limit:** `60` requests/minute.
+  - Response headers:
+    - `RateLimit-Limit`
+    - `RateLimit-Remaining`
+    - `RateLimit-Reset` (on `429`)
+    - `Retry-After` (on `429`)
+- **Login limit:** `POST /api/auth/login` → `10` requests/minute.
+- **Register limit:** `POST /api/auth/register` → `3` requests/minute.
+- **Contact email user limit:** `POST /api/email/send` → `1` request/minute per authenticated user.
+  - Uses dedicated headers: `EmailRateLimit-*` (to avoid confusion with global/auth limits).
+
+---
+
 ## Client Integration Notes
 
 ### Browser-Level Exit Protection (Recommended)
