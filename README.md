@@ -17,21 +17,27 @@ Online quiz game inspired by Kahoot, where questions are generated automatically
 
 ## Architecture and Design
 
-MatQuiz is built as an **Event-Driven Microservices** platform deployed on a single Virtual Private Server (VPS) via Docker. This architecture separates the real-time gameplay logic from the time-consuming AI content generation, ensuring a responsive user experience.
+MatQuiz is built as an **event-driven, service-oriented platform** deployed on a VPS with Docker Compose.  
+The architecture keeps real-time gameplay in the main backend while offloading AI quiz generation to a dedicated worker service, so lobby/game interactions stay responsive.
 
 ### Key Architectural Decisions
 
-  * **Asynchronous AI Generation:** The application uses **RabbitMQ** as a message broker to handle the asynchronous workflow for quiz creation. This prevents the main gameplay server from blocking while waiting for the external **Gemini API** response.
-  * **Microservice Separation:** Dedicated, independent microservices (`ai-infer` and `ai-process`) handle the external API call and content validation.
-  * **Real-Time Communication:** **WebSockets** (using the STOMP protocol) are used for instant state updates, delivering questions, scores, and countdown timers to all connected players simultaneously.
+  * **Asynchronous AI generation over RabbitMQ:** The backend publishes generation jobs and immediately returns control to the game flow (`WAITING -> GENERATING`) instead of blocking on external AI latency.
+  * **Single AI worker service:** A dedicated Java AI service consumes generation jobs, calls **OpenAI**, validates output, then publishes success/failure results back to the backend.
+  * **Request/Reply queue topology:** The system uses two RabbitMQ paths:
+    * `quiz_generation_exchange` -> `quiz_generation_queue` (backend -> AI worker)
+    * `quiz_results_exchange` -> `quiz_results_queue` (AI worker -> backend)
+  * **Real-time communication:** **WebSockets** (STOMP) broadcast room state, questions, progress, and results to connected players.
 
 ### The Content Generation Flow
 
-1.  **Backend** sends a job to the **`ai.jobs`** queue with configuration (Topic, Difficulty).
-2.  **`ai-infer`** (AI Inference Service) calls **Google Gemini 2.5 Flash API**.
-3.  **`ai-infer`** publishes the raw, text-based JSON output to **`ai.raw`**.
-4.  **`ai-process`** (Validation Service) cleans the JSON, enforces the required schema (e.g., 4 answers, valid index), and publishes the verified quiz to **`ai.validated`**.
-5.  **Backend** consumes the validated quiz and broadcasts the "Quiz Ready" state via **WebSocket**.
+1. **Backend** publishes `QuizGenerationPayload` (`roomCode`, `topic`, `difficulty`) to `quiz_generation_exchange`.
+2. **AI service** consumes from `quiz_generation_queue` and calls **OpenAI** (`gpt-5-mini`).
+3. **AI service** enforces structured output (`JSON_SCHEMA`) and validates quiz rules (5 questions, 4 answers each, valid `correctIndex`).
+4. **AI service** publishes a `SUCCESS` or `FAILED` result to `quiz_results_exchange`.
+5. **Backend** consumes from `quiz_results_queue`:
+   * `SUCCESS`: persists questions, moves room to `READY`, broadcasts room update.
+   * `FAILED`: resets room to `WAITING`, broadcasts update, and notifies host.
 
 
 ## Technology Stack
@@ -42,16 +48,18 @@ MatQuiz is built as an **Event-Driven Microservices** platform deployed on a sin
 | **Frontend** | **React** | Single Page Application (SPA) for dynamic player and host interfaces. |
 | **Database** | **PostgreSQL** | Persistent storage for users, game metadata, and results. Uses **JSONB** for efficient answer storage. |
 | **Messaging** | **RabbitMQ** | Decouples the core application from the external AI services. |
-| **AI Content** | **Google Gemini 2.5 Flash** | Provides fast, on-demand content generation via its REST API. |
-| **Deployment** | **Docker / Nginx** | Ensures easy portability and reliable hosting on the VPS. |
+| **AI Content** | **OpenAI (gpt-5-mini)** | Generates quiz content with schema-constrained JSON responses. |
+| **Deployment** | **Docker Compose / Coolify** | Containerized deployment with reverse-proxied frontend + backend domains. |
 
 
 ## Stability and Reliability
 
 The project incorporates patterns to handle the instability of external services:
 
-  * **Fallback Mechanism:** If the Gemini API fails or times out, the `ai-infer` service retrieves a pre-generated quiz from a dedicated backup database table, ensuring games can still start.
-  * **JSON Schema Validation:** The `ai-process` microservice guarantees data consistency. If Gemini generates malformed JSON, `ai-process` initiates an automatic **retry loop** to request a new quiz before failing the job.
+  * **Queue-based decoupling:** RabbitMQ isolates gameplay from AI generation latency and temporary provider issues.
+  * **Structured output + server validation:** The AI service requests JSON schema output and validates invariants before publishing results.
+  * **Graceful failure path:** Failed AI generations publish explicit `FAILED` results, allowing the backend to reset room state and notify the host.
+  * **Generation timeout handling:** Rooms stuck in `GENERATING` are reset to `WAITING` and hosts receive timeout notifications.
   * **Server-Side Time Validation:** Anti-cheat logic is enforced by tracking the question start time and answer submission time strictly on the server, eliminating client-side cheating.
 
 
@@ -59,10 +67,11 @@ The project incorporates patterns to handle the instability of external services
 
 ```text
 /matquiz
-├── /backend            # Spring Boot Core, WebSocket, API Gateway
-├── /ai-services        # ai-infer & ai-process services (Java)
-├── /frontend           # React SPA
-└── docker-compose.yml  # Infrastructure definition (Postgres, RabbitMQ)
+├── /matquiz-spring-boot-backend           # Core API, WebSocket, game state, auth
+├── /matquiz-ai-service-java               # Async AI generation worker (OpenAI + RabbitMQ)
+├── /matquiz_react_frontend/matquiz-react  # React SPA
+├── /docker-compose.prod.yaml              # Production stack (frontend, backend, ai-service, db, broker)
+└── /.env.prod.example                     # Production environment template
 ```
 
 ## Excalidraw Diagrams Backend
@@ -187,6 +196,8 @@ Table player_answers {
 
 ## DB Diagrams (Backup Database Schema)
 
+> Note: kept for historical design reference. The current production flow uses the dedicated OpenAI worker service and does not depend on this backup table.
+
 [DB Diagram Link Backup Database](https://dbdiagram.io/d/MatQuiz-AI-Backup-Database-6924341e228c5bbc1a37a76a)
 
 <img width="812" height="509" alt="DBDiagramBackupDatabase" src="https://github.com/user-attachments/assets/5aa7bc41-2acc-430e-a42d-57d3daa96c39" />
@@ -194,8 +205,8 @@ Table player_answers {
 ```java
 Project MatQuiz_Backup {
   database_type: 'PostgreSQL'
-  Note: 'Backend database that stores as a cache the previously generated'
-  Note: 'quizes and has a seed of 50 quizes if gemini servers are not working correctly'
+  Note: 'Historical backup-cache concept for generated quizzes'
+  Note: 'Not part of the current production OpenAI flow'
 }
 
 Table backup_quizzes {
@@ -206,16 +217,15 @@ Table backup_quizzes {
   difficulty varchar(20) [not null]
   
   // The Payload
-  // I store the raw JSON string that Gemini WOULD have returned.
-  // This allows ai-infer to just inject this into the pipeline 
-  // without changing the logic.
+  // Stores a raw provider-like JSON payload for fallback scenarios.
+  // In current architecture this table is legacy/reference only.
   raw_json_response text [not null]
   
   last_used_at timestamp [default: null]
   created_at timestamp [default: `now()`]
   
   indexes {
-    (topic, difficulty) // Fast lookup when gemini servers are down and backup mode is on
+    (topic, difficulty) // Fast lookup for topic+difficulty fallback lookups
   }
 }
 ```
