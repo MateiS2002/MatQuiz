@@ -1,5 +1,16 @@
 # MatQuiz
 
+> Full-stack real-time quiz platform with async AI question generation.
+
+**Live Project:** [matquiz.mateistanescu.ro](https://matquiz.mateistanescu.ro)  
+**Personal Website:** [mateistanescu.ro](https://mateistanescu.ro)  
+**Contact:** [stanescumatei@protonmail.com](mailto:stanescumatei@protonmail.com)
+
+**CV Snapshot**
+- Role: Full-stack engineer (architecture, backend, frontend, deployment).
+- Focus: Scalable event-driven design with Spring Boot, RabbitMQ, React, PostgreSQL.
+- Status: Production-deployed portfolio project.
+
 ## Description
 
 Online quiz game inspired by Kahoot, where questions are generated automatically by an LLM.
