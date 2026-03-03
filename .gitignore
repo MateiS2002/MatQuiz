@@ -1,4 +1,19 @@
-# Repository-wide Python cache hygiene
+# Secrets and local environment files
+.env
+.env.*
+!.env*.example
+
+# IDE and OS-generated files
+**/.idea/
+**/.m2/
+.DS_Store
+
+# Python cache hygiene
 **/__pycache__/
 *.py[cod]
 *$py.class
+
+# Java and frontend build outputs
+**/target/
+**/dist/
+**/node_modules/
