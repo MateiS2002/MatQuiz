@@ -7,6 +7,7 @@ import Register from "@/pages/Register"
 import Terms from "@/pages/Terms"
 import Profile from "@/pages/Profile"
 import Contact from "@/pages/Contact"
+import Help from "@/pages/Help"
 import GameControl from "@/pages/GameControl"
 import Join from "@/pages/Join"
 import Create from "@/pages/Create"
@@ -50,6 +51,12 @@ const AppRoutes = () => (
         <RequireAuth>
           <Contact />
         </RequireAuth>
+      }
+    />
+    <Route
+      path={ROUTES.help}
+      element={
+          <Help />
       }
     />
     <Route

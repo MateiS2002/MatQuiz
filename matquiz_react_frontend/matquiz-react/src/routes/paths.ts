@@ -28,4 +28,5 @@ export const ROUTE_LABELS: Partial<Record<RoutePath, string>> = {
   [ROUTES.settings]: "Settings",
   [ROUTES.contact]: "Contact / Bug-report",
   [ROUTES.leaderboard]: "Leaderboard",
+  [ROUTES.help]: "Help",
 }
