@@ -12,13 +12,55 @@ import {
 
 type MessageParser<T> = (body: string) => T
 type Unsubscribe = () => void
+type ConnectionListener = (isConnected: boolean) => void
 
 const DEFAULT_WS_URL = "http://localhost:8080/ws"
+const DISCONNECT_GRACE_MS = 1000
 
 let client: Client | null = null
 let activeToken: string | null = null
 let connectPromise: Promise<void> | null = null
 let refCount = 0
+let suppressDisconnectSignals = false
+let isConnectedState = false
+let disconnectGraceTimeout: number | null = null
+const connectionListeners = new Set<ConnectionListener>()
+
+const emitConnectionState = (nextConnected: boolean) => {
+  if (isConnectedState === nextConnected) {
+    return
+  }
+  isConnectedState = nextConnected
+  connectionListeners.forEach(listener => {
+    listener(nextConnected)
+  })
+}
+
+const clearDisconnectGraceTimeout = () => {
+  if (disconnectGraceTimeout === null) {
+    return
+  }
+  window.clearTimeout(disconnectGraceTimeout)
+  disconnectGraceTimeout = null
+}
+
+const markConnected = () => {
+  clearDisconnectGraceTimeout()
+  emitConnectionState(true)
+}
+
+const scheduleDisconnected = () => {
+  if (suppressDisconnectSignals) {
+    return
+  }
+  if (disconnectGraceTimeout !== null) {
+    return
+  }
+  disconnectGraceTimeout = window.setTimeout(() => {
+    disconnectGraceTimeout = null
+    emitConnectionState(false)
+  }, DISCONNECT_GRACE_MS)
+}
 
 const normalizeNativeBrokerUrl = (rawUrl: string): string => {
   if (rawUrl.startsWith("ws://") || rawUrl.startsWith("wss://")) {
@@ -121,15 +163,24 @@ const connect = async (token: string) => {
     }
     client.onConnect = () => {
       connectPromise = null
+      markConnected()
       resolve()
     }
     client.onStompError = (frame: IFrame) => {
       connectPromise = null
+      scheduleDisconnected()
       reject(new Error(frame.headers.message || frame.body || "STOMP error"))
     }
     client.onWebSocketError = () => {
       connectPromise = null
+      scheduleDisconnected()
       reject(new Error("WebSocket error"))
+    }
+    client.onWebSocketClose = () => {
+      scheduleDisconnected()
+    }
+    client.onDisconnect = () => {
+      scheduleDisconnected()
     }
   })
   client.activate()
@@ -157,12 +208,17 @@ export const retainConnection = async (token: string) => {
 export const disconnect = async () => {
   if (!client) {
     activeToken = null
+    emitConnectionState(false)
     return
   }
+  suppressDisconnectSignals = true
   await client.deactivate()
+  suppressDisconnectSignals = false
   client = null
   activeToken = null
   connectPromise = null
+  clearDisconnectGraceTimeout()
+  emitConnectionState(false)
 }
 
 export const subscribe = <T>(
@@ -225,4 +281,14 @@ export const waitForMessage = async <T>(
       resolve(parser(message.body))
     })
   })
+}
+
+export const subscribeToConnectionState = (
+  listener: ConnectionListener,
+): Unsubscribe => {
+  connectionListeners.add(listener)
+  listener(isConnectedState)
+  return () => {
+    connectionListeners.delete(listener)
+  }
 }

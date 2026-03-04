@@ -6,6 +6,9 @@ type InfoModalProps = {
   message: string
   onClose: () => void
   sizePreset?: "default" | "startup"
+  primaryActionLabel?: string
+  onPrimaryAction?: () => void
+  hideCloseButton?: boolean
 }
 
 const InfoModal = ({
@@ -14,6 +17,9 @@ const InfoModal = ({
   message,
   onClose,
   sizePreset = "default",
+  primaryActionLabel,
+  onPrimaryAction,
+  hideCloseButton = false,
 }: InfoModalProps) => {
   const isStartupPreset =
     sizePreset === "startup" || title === "Testing Deployment Notice"
@@ -31,20 +37,33 @@ const InfoModal = ({
         aria-labelledby="info-modal-title"
       >
         <div className={styles.header}>
-          <button
-            type="button"
-            className={styles.closeButton}
-            aria-label="Close message"
-            onClick={onClose}
-          >
-            x
-          </button>
+          {hideCloseButton ? (
+            <div className={styles.closeButtonPlaceholder} />
+          ) : (
+            <button
+              type="button"
+              className={styles.closeButton}
+              aria-label="Close message"
+              onClick={onClose}
+            >
+              x
+            </button>
+          )}
           <h3 id="info-modal-title" className={styles.title}>
             {title}
           </h3>
         </div>
         <div className={styles.body}>
           <p className={styles.message}>{message}</p>
+          {primaryActionLabel && onPrimaryAction ? (
+            <button
+              type="button"
+              className={styles.primaryAction}
+              onClick={onPrimaryAction}
+            >
+              {primaryActionLabel}
+            </button>
+          ) : null}
         </div>
       </div>
     </div>

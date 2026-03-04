@@ -24,6 +24,7 @@ type GameState = {
   lastSubmitAck: string | null
   lastFailedAnswer: string | null
   endGameReason: "END_GAME_EARLY" | null
+  isRealtimeDisconnected: boolean
 }
 
 const initialState: GameState = {
@@ -38,6 +39,7 @@ const initialState: GameState = {
   lastSubmitAck: null,
   lastFailedAnswer: null,
   endGameReason: null,
+  isRealtimeDisconnected: false,
 }
 
 export const gameSlice = createSlice({
@@ -96,6 +98,9 @@ export const gameSlice = createSlice({
     setEndGameReason: (state, action: { payload: "END_GAME_EARLY" }) => {
       state.endGameReason = action.payload
     },
+    setRealtimeDisconnected: (state, action: { payload: boolean }) => {
+      state.isRealtimeDisconnected = action.payload
+    },
     resetGameState: () => initialState,
   },
 })
@@ -117,5 +122,6 @@ export const {
   setSubmitAck,
   setFailedAnswer,
   setEndGameReason,
+  setRealtimeDisconnected,
   resetGameState,
 } = gameSlice.actions

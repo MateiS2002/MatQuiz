@@ -17,12 +17,14 @@ import {
   setEndGameReason,
   setFailedAnswer,
   setLastError,
+  setRealtimeDisconnected,
   setResults,
   setSubmitAck,
 } from "@/features/game/slice/gameSlice"
 import {
   publishJson,
   retainConnection,
+  subscribeToConnectionState,
   subscribe,
   waitForMessage,
 } from "@/features/game/api/gameSocket"
@@ -125,9 +127,13 @@ export const gameApi = baseApi.injectEndpoints({
       async onCacheEntryAdded(_arg, lifecycleApi) {
         const { cacheDataLoaded, cacheEntryRemoved, dispatch } = lifecycleApi
         let release: (() => Promise<void>) | null = null
+        let unsubscribeConnectionState: (() => void) | null = null
         try {
           await cacheDataLoaded
           const token = getToken(() => lifecycleApi.getState())
+          unsubscribeConnectionState = subscribeToConnectionState(isConnected => {
+            dispatch(setRealtimeDisconnected(!isConnected))
+          })
           release = await retainConnection(token)
           await cacheEntryRemoved
         } catch (error) {
@@ -140,6 +146,10 @@ export const gameApi = baseApi.injectEndpoints({
           if (release) {
             await release()
           }
+          if (unsubscribeConnectionState) {
+            unsubscribeConnectionState()
+          }
+          dispatch(setRealtimeDisconnected(false))
         }
       },
     }),

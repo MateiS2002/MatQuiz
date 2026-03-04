@@ -49,6 +49,11 @@
   text-transform: lowercase;
 }
 
+.closeButtonPlaceholder {
+  border-right: 4px solid #ffffff;
+  min-height: clamp(74px, 12vw, 150px);
+}
+
 .title {
   color: #ffffff;
   font-size: clamp(40px, 6vw, 78px);
@@ -71,6 +76,34 @@
   font-size: clamp(28px, 4.4vw, 62px);
   margin: 0;
   white-space: pre-wrap;
+}
+
+.primaryAction {
+  background: #ffffff;
+  border: 4px solid #ffffff;
+  border-radius: 999px;
+  color: #3f0080;
+  cursor: pointer;
+  display: inline-flex;
+  justify-content: center;
+  align-items: center;
+  font-size: clamp(24px, 4.2vw, 44px);
+  font-family: "JetBrains Mono", monospace;
+  font-weight: 700;
+  margin-top: clamp(24px, 3.2vw, 36px);
+  min-height: clamp(62px, 10vw, 96px);
+  min-width: clamp(200px, 36vw, 320px);
+  padding: clamp(12px, 1.8vw, 20px) clamp(28px, 4vw, 52px);
+}
+
+.primaryAction:hover {
+  background: transparent;
+  color: #ffffff;
+}
+
+.primaryAction:focus-visible {
+  outline: 3px solid #ffffff;
+  outline-offset: 3px;
 }
 
 .modalStartup .message {
