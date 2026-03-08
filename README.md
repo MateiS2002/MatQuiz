@@ -87,10 +87,7 @@ The project incorporates patterns to handle the instability of external services
 
 ## Excalidraw Diagrams Backend
 
-[Excalidraw File Link](https://excalidraw.com/#json=e323lmQXd7zlJJtqi9DpT,8Y8shsL2KvpSI3_dpJfklw)
-
-<img width="3175" height="1108" alt="Excalidraw_Backend_Diagram" src="https://github.com/user-attachments/assets/604d7da1-f576-4e88-bab2-5603366d7590" />
-
+<img width="2876" height="1180" alt="image" src="https://github.com/user-attachments/assets/22936d68-5203-4a01-b945-fa5ebe66d680" />
 
 ## Figma Frontend Design
 
